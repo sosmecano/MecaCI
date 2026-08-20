@@ -33,7 +33,6 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.mecanova.mobile",
-      "versionCode": 1,
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
