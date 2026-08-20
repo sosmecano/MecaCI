@@ -40,15 +40,22 @@ export default function SOSPanicScreen({ navigation }: any) {
   }, []);
 
   const locateMe = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return;
-    const loc = await Location.getCurrentPositionAsync({});
-    setLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-    reverseGeocode(loc.coords.latitude, loc.coords.longitude);
-    mapRef.current?.animateToRegion({
-      latitude: loc.coords.latitude, longitude: loc.coords.longitude,
-      latitudeDelta: 0.02, longitudeDelta: 0.02,
-    }, 500);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission requise', 'Activez la localisation dans les paramètres de votre téléphone.');
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      reverseGeocode(loc.coords.latitude, loc.coords.longitude);
+      mapRef.current?.animateToRegion({
+        latitude: loc.coords.latitude, longitude: loc.coords.longitude,
+        latitudeDelta: 0.02, longitudeDelta: 0.02,
+      }, 500);
+    } catch (e: any) {
+      Alert.alert('Erreur', 'Impossible de vous localiser. Vérifiez que la GPS est activé.');
+    }
   };
 
   const onMapPress = async (e: MapPressEvent) => {

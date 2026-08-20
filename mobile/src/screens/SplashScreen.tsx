@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Image } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Colors, FontSize } from '../constants/theme';
 import { api } from '../services/api';
@@ -10,7 +10,7 @@ const USER_TYPE_KEY = 'userType';
 
 export default function SplashScreen({ navigation }: any) {
   useEffect(() => {
-    (async () => {
+    const timeout = setTimeout(async () => {
       try {
         const token = await SecureStore.getItemAsync(TOKEN_KEY);
         const userType = await SecureStore.getItemAsync(USER_TYPE_KEY);
@@ -36,13 +36,20 @@ export default function SplashScreen({ navigation }: any) {
         await SecureStore.deleteItemAsync(USER_TYPE_KEY);
         navigation.replace('Login');
       }
-    })();
+    }, 2000);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>🔧</Text>
+      <Image
+        source={require('../../assets/icon.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Text style={styles.title}>Mecanova</Text>
+      <Text style={styles.subtitle}>Mécanicien et dépannage à portée de main</Text>
       <ActivityIndicator size="large" color={Colors.black} style={styles.spinner} />
     </View>
   );
@@ -53,11 +60,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: '#E6F4FE',
   },
-  icon: {
-    fontSize: 64,
-    marginBottom: 16,
+  logo: {
+    width: 180,
+    height: 180,
+    marginBottom: 20,
   },
   title: {
     fontSize: FontSize.largeTitle,
@@ -65,7 +73,12 @@ const styles = StyleSheet.create({
     color: Colors.black,
     letterSpacing: -0.5,
   },
+  subtitle: {
+    fontSize: FontSize.body,
+    color: Colors.mediumGray,
+    marginTop: 8,
+  },
   spinner: {
-    marginTop: 32,
+    marginTop: 40,
   },
 });

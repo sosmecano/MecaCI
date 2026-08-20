@@ -15,7 +15,6 @@
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "1",
       "bundleIdentifier": "com.mecanova.mobile",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Mecanova utilise votre position pour trouver des mécaniciens et garages à proximité.",

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import MapView, { Marker, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
@@ -55,15 +55,22 @@ export default function TowingScreen({ navigation }: any) {
   }, []);
 
   const locateMe = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return;
-    const loc = await Location.getCurrentPositionAsync({});
-    setDepartCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-    await reverseGeocode(loc.coords.latitude, loc.coords.longitude);
-    mapRef.current?.animateToRegion({
-      latitude: loc.coords.latitude, longitude: loc.coords.longitude,
-      latitudeDelta: 0.05, longitudeDelta: 0.05,
-    }, 500);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission requise', 'Activez la localisation dans les paramètres de votre téléphone.');
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setDepartCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      await reverseGeocode(loc.coords.latitude, loc.coords.longitude);
+      mapRef.current?.animateToRegion({
+        latitude: loc.coords.latitude, longitude: loc.coords.longitude,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      }, 500);
+    } catch (e: any) {
+      Alert.alert('Erreur', 'Impossible de vous localiser. Vérifiez que la GPS est activé.');
+    }
   };
 
   const onMapPress = async (e: MapPressEvent) => {

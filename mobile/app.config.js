@@ -5,13 +5,24 @@ module.exports = () => {
 
   return {
     ...config,
+    ios: {
+      ...config.ios,
+      infoPlist: {
+        ...config.ios?.infoPlist,
+        ITSAppUsesNonExemptEncryption: false,
+      },
+    },
     android: {
       ...config.android,
-      config: {
-        googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_API_KEY,
-        },
-      },
+      ...(process.env.GOOGLE_MAPS_API_KEY
+        ? {
+            config: {
+              googleMaps: {
+                apiKey: process.env.GOOGLE_MAPS_API_KEY,
+              },
+            },
+          }
+        : {}),
     },
   };
 };
