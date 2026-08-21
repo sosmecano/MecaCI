@@ -27,7 +27,7 @@ export default function ProLoginScreen({ navigation }: any) {
   const sendOtp = async () => {
     setLoading(true);
     try {
-      const data = await api.auth.sendOtp(phone);
+      const data = await api.professionals.sendOtp ? await api.professionals.sendOtp(phone) : await api.auth.sendOtp(phone);
       if (data.code) setOtpCode(data.code);
       setStep('otp');
       setCooldown(60);
@@ -39,7 +39,7 @@ export default function ProLoginScreen({ navigation }: any) {
       }, 1000);
       cooldownTimer.current = timer;
     } catch (e: any) {
-      alert(e.message);
+      alert(e.message || 'Erreur lors de l\'envoi du code');
     } finally {
       setLoading(false);
     }
@@ -54,8 +54,7 @@ export default function ProLoginScreen({ navigation }: any) {
       await SecureStore.setItemAsync(USER_TYPE_KEY, 'pro');
       navigation.replace('ProTabs');
     } catch (e: any) {
-      alert('Identifiants invalides');
-      navigation.navigate('ProRegister');
+      alert(e.message || 'Identifiants invalides');
     } finally {
       setLoading(false);
     }

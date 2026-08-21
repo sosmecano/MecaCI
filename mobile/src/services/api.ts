@@ -139,6 +139,9 @@ export const api = {
     register: (data: any) => request('/professionals/register', {
       method: 'POST', body: JSON.stringify(data),
     }),
+    sendOtp: (phone: string) => request('/professionals/send-otp', {
+      method: 'POST', body: JSON.stringify({ phone }),
+    }),
     verifyOtp: (phone: string, code: string) => request('/professionals/verify-otp', {
       method: 'POST', body: JSON.stringify({ phone, code }),
     }),

@@ -77,7 +77,7 @@ router.post('/verify-otp', validate(verifyProOtpSchema), async (req: Request, re
     }
     const pro = result.rows[0];
     const token = signToken({ userId: pro.id, proId: pro.id, role: 'professional' });
-    const refreshToken = await signRefreshToken(pro.id, pro.id, 'professional');
+    const refreshToken = await signRefreshToken(null, pro.id, 'professional');
     res.json({ token, refreshToken, professional: pro });
   } catch (err) {
     res.status(500).json({ error: 'Verification failed' });
