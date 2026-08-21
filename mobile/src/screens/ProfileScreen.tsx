@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Button from '../components/Button';
 import * as SecureStore from 'expo-secure-store';
 import { useFocusEffect } from '@react-navigation/native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Card from '../components/Card';
 import { api } from '../services/api';
 
@@ -13,19 +14,12 @@ export default function ProfileScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadProfile();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { loadProfile(); }, []));
 
   const loadProfile = async () => {
     setError(null);
     try {
-      const [userData, vehData] = await Promise.all([
-        api.users.me(),
-        api.users.vehicles.list(),
-      ]);
+      const [userData, vehData] = await Promise.all([api.users.me(), api.users.vehicles.list()]);
       setUser(userData);
       setVehicles(vehData);
     } catch (e: any) {
@@ -50,9 +44,7 @@ export default function ProfileScreen({ navigation }: any) {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
+        <View style={styles.center}><ActivityIndicator size="large" color={Colors.primary} /></View>
       </SafeAreaView>
     );
   }
@@ -61,22 +53,28 @@ export default function ProfileScreen({ navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.lg }}>
-          <Text style={{ color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.md }}>{error}</Text>
+          <Text style={{ ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center', marginBottom: Spacing.md }}>{error}</Text>
           <Button title="Réessayer" onPress={loadProfile} variant="outline" />
         </View>
       </SafeAreaView>
     );
   }
 
-  const initials = user
-    ? `${(user.first_name || '')[0]}${(user.last_name || '')[0]}`
-    : '??';
+  const initials = user ? `${(user.first_name || '')[0]}${(user.last_name || '')[0]}` : '??';
+
+  const menuItems = [
+    { icon: 'car', label: 'Mes véhicules', route: 'Vehicles' },
+    { icon: 'receipt', label: 'Mes missions', route: 'Activite' },
+    { icon: 'wallet', label: 'Mes paiements', route: 'Payment' },
+    { icon: 'settings', label: 'Paramètres', route: 'Parametres' },
+    { icon: 'help-circle', label: 'Aide et support', route: null },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.profileHeader}>
-          <TouchableOpacity style={styles.avatar} onPress={() => navigation.navigate('Parametres')}>
+          <TouchableOpacity style={styles.avatar} onPress={() => navigation.navigate('Parametres')} activeOpacity={0.7}>
             {user?.photo_url ? (
               <Image source={{ uri: user.photo_url }} style={styles.avatarImg} />
             ) : (
@@ -86,63 +84,54 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={styles.name}>
             {user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'Utilisateur'}
           </Text>
-          <View style={styles.phoneRow}>
-            <Text style={styles.phone}>{user?.phone || ''}</Text>
-          </View>
+          <Text style={styles.phone}>{user?.phone || ''}</Text>
           {user?.city && (
             <View style={styles.badge}>
+              <Ionicons name="location" size={12} color={Colors.onSurfaceVariant} />
               <Text style={styles.badgeText}>{user.city}</Text>
             </View>
           )}
         </View>
 
         <View style={styles.menu}>
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Vehicles')}>
-            <View style={styles.menuIcon}><Text style={styles.menuIconText}>🚗</Text></View>
-            <Text style={styles.menuLabel}>Mes véhicules</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Activite')}>
-            <View style={styles.menuIcon}><Text style={styles.menuIconText}>📋</Text></View>
-            <Text style={styles.menuLabel}>Mes missions</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Payment')}>
-            <View style={styles.menuIcon}><Text style={styles.menuIconText}>💳</Text></View>
-            <Text style={styles.menuLabel}>Mes paiements</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Parametres')}>
-            <View style={styles.menuIcon}><Text style={styles.menuIconText}>⚙️</Text></View>
-            <Text style={styles.menuLabel}>Paramètres</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem} onPress={() => Alert.alert('Aide', 'Contactez-nous au +225 01 01 01 01 01')}>
-            <View style={styles.menuIcon}><Text style={styles.menuIconText}>❓</Text></View>
-            <Text style={styles.menuLabel}>Aide et support</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
+          {menuItems.map((item, i) => (
+            <TouchableOpacity
+              key={item.label}
+              style={[styles.menuItem, i < menuItems.length - 1 && styles.menuItemBorder]}
+              onPress={() => item.route ? navigation.navigate(item.route) : Alert.alert('Aide', 'Contactez-nous au +225 01 01 01 01 01')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuIcon}>
+                <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
+              </View>
+              <Text style={styles.menuLabel}>{item.label}</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.outlineVariant} />
+            </TouchableOpacity>
+          ))}
         </View>
 
         <Text style={styles.sectionTitle}>Véhicule principal</Text>
         {vehicles.length > 0 ? (
-          <Card style={styles.vehicleCard}>
+          <Card>
             <View style={styles.vehicleRow}>
-              <View style={styles.vehicleIcon}><Text style={styles.vehicleIconText}>🚗</Text></View>
+              <View style={styles.vehicleIcon}>
+                <Ionicons name="car" size={22} color={Colors.secondary} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.vehicleName}>{vehicles[0].brand} {vehicles[0].model} {vehicles[0].year}</Text>
                 <Text style={styles.vehiclePlate}>{vehicles[0].license_plate}</Text>
               </View>
-              <Text style={styles.arrow}>›</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.outlineVariant} />
             </View>
           </Card>
         ) : (
-          <TouchableOpacity onPress={() => navigation.navigate('Vehicles')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Vehicles')} activeOpacity={0.7}>
             <Text style={styles.noVehicle}>+ Ajouter un véhicule</Text>
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.7}>
+          <Ionicons name="log-out" size={18} color={Colors.error} />
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -151,58 +140,53 @@ export default function ProfileScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1, backgroundColor: Colors.surface },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { padding: Spacing.lg },
+  content: { padding: Spacing.safeMargin },
   profileHeader: { alignItems: 'center', marginBottom: Spacing.xl, paddingVertical: Spacing.lg },
   avatar: {
-    width: 88, height: 88, borderRadius: 44, backgroundColor: Colors.primary,
-    justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.md,
-    overflow: 'hidden',
+    width: 88, height: 88, borderRadius: 44, backgroundColor: Colors.primaryContainer,
+    justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.md, overflow: 'hidden',
   },
   avatarImg: { width: 88, height: 88, borderRadius: 44 },
-  avatarText: { fontSize: 32, fontWeight: '700', color: Colors.black },
-  name: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  phoneRow: { flexDirection: 'row', alignItems: 'center', marginTop: Spacing.xs },
-  phone: { fontSize: FontSize.body, color: Colors.mediumGray },
+  avatarText: { ...Typography.headlineLg, color: Colors.onPrimaryContainer },
+  name: { ...Typography.titleMd, color: Colors.onSurface },
+  phone: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, marginTop: Spacing.xs },
   badge: {
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.sm,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: Colors.surfaceContainerHigh, borderRadius: BorderRadius.full,
     paddingHorizontal: Spacing.md, paddingVertical: 4, marginTop: Spacing.sm,
   },
-  badgeText: { fontSize: FontSize.caption, color: Colors.mediumGray, fontWeight: '500' },
+  badgeText: { ...Typography.caption, color: Colors.onSurfaceVariant },
   menu: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surfaceContainerLowest, borderRadius: BorderRadius.lg,
     marginBottom: Spacing.xl, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: Colors.outlineVariant,
   },
   menuItem: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: Spacing.md, paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1, borderBottomColor: Colors.lightGray,
   },
+  menuItemBorder: { borderBottomWidth: 1, borderBottomColor: Colors.surfaceContainerHigh },
   menuIcon: {
-    width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.lightGray,
+    width: 40, height: 40, borderRadius: BorderRadius.md, backgroundColor: Colors.primaryContainer + '20',
     justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
   },
-  menuIconText: { fontSize: 16 },
-  menuLabel: { fontSize: FontSize.body, color: Colors.black, flex: 1, fontWeight: '500' },
-  arrow: { fontSize: 24, color: Colors.border, fontWeight: '300' },
-  sectionTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black, marginBottom: Spacing.sm },
-  vehicleCard: { padding: Spacing.lg },
+  menuLabel: { ...Typography.bodyBase, color: Colors.onSurface, flex: 1 },
+  sectionTitle: { ...Typography.subheadSm, color: Colors.onSurface, marginBottom: Spacing.sm },
   vehicleRow: { flexDirection: 'row', alignItems: 'center' },
   vehicleIcon: {
-    width: 48, height: 48, borderRadius: 12, backgroundColor: '#E5F0FF',
+    width: 48, height: 48, borderRadius: BorderRadius.md, backgroundColor: Colors.secondaryContainer + '30',
     justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
   },
-  vehicleIconText: { fontSize: 22 },
-  vehicleName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  vehiclePlate: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  noVehicle: { fontSize: FontSize.body, color: Colors.primaryDark, textAlign: 'center', marginTop: Spacing.md, fontWeight: '600' },
+  vehicleName: { ...Typography.bodyBase, fontWeight: '700' as any, color: Colors.onSurface },
+  vehiclePlate: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  noVehicle: { ...Typography.bodyBase, color: Colors.primary, textAlign: 'center', marginTop: Spacing.md, fontWeight: '600' as any },
   logoutBtn: {
     marginTop: Spacing.xl, paddingVertical: Spacing.md,
-    alignItems: 'center', borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: '#FF3B30',
+    alignItems: 'center', borderRadius: BorderRadius.lg,
+    borderWidth: 1, borderColor: Colors.error + '40',
+    flexDirection: 'row', justifyContent: 'center', gap: Spacing.xs,
   },
-  logoutText: { fontSize: FontSize.body, fontWeight: '600', color: '#FF3B30' },
+  logoutText: { fontSize: 16, fontWeight: '600' as any, color: Colors.error },
 });

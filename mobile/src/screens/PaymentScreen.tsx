@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { api } from '../services/api';
 
 const methods = [
-  { id: 'orange_money', label: 'Orange Money', icon: '📱' },
-  { id: 'mtn_momo', label: 'MTN MoMo', icon: '📱' },
-  { id: 'wave', label: 'Wave', icon: '📱' },
-  { id: 'cash', label: 'Espèces', icon: '💵' },
+  { id: 'orange_money', label: 'Orange Money', icon: 'phone-portrait-outline' as const, color: '#FF6600' },
+  { id: 'mtn_momo', label: 'MTN MoMo', icon: 'phone-portrait-outline' as const, color: '#FFCC00' },
+  { id: 'wave', label: 'Wave', icon: 'water-outline' as const, color: '#0066FF' },
+  { id: 'cash', label: 'Espèces', icon: 'cash-outline' as const, color: Colors.success },
 ];
 
 export default function PaymentScreen({ route, navigation }: any) {
@@ -39,8 +40,11 @@ export default function PaymentScreen({ route, navigation }: any) {
       <View style={styles.content}>
         <Text style={styles.title}>Paiement</Text>
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Intervention terminée</Text>
+        <Card style={styles.summaryCard}>
+          <View style={styles.summaryHeader}>
+            <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
+            <Text style={styles.summaryLabel}>Intervention terminée</Text>
+          </View>
           <Text style={styles.amount}>{route?.params?.amount || '12 500'} FCFA</Text>
           <View style={styles.divider} />
           <View style={styles.detailRow}>
@@ -51,7 +55,7 @@ export default function PaymentScreen({ route, navigation }: any) {
             <Text style={styles.detailLabel}>Commission Mecanova</Text>
             <Text style={styles.detailValue}>{Math.round((route?.params?.amount || 12000) * 0.1)} FCFA</Text>
           </View>
-        </View>
+        </Card>
 
         <Text style={styles.sectionTitle}>Moyen de paiement</Text>
         {methods.map((m) => (
@@ -60,8 +64,8 @@ export default function PaymentScreen({ route, navigation }: any) {
             style={[styles.methodCard, selected === m.id && styles.methodSelected]}
             onPress={() => setSelected(m.id)}
           >
-            <View style={[styles.methodIcon, selected === m.id && styles.methodIconSelected]}>
-              <Text style={styles.methodIconText}>{m.icon}</Text>
+            <View style={[styles.methodIcon, { backgroundColor: m.color + '15' }]}>
+              <Ionicons name={m.icon} size={22} color={m.color} />
             </View>
             <Text style={styles.methodLabel}>{m.label}</Text>
             <View style={[styles.radio, selected === m.id && styles.radioSelected]}>
@@ -85,37 +89,92 @@ export default function PaymentScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { flex: 1, padding: Spacing.lg },
-  title: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black, marginBottom: Spacing.lg },
+  title: {
+    ...Typography.headlineLg,
+    color: Colors.onSurface,
+    marginBottom: Spacing.lg,
+  },
   summaryCard: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
-    padding: Spacing.lg, marginBottom: Spacing.lg,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    marginBottom: Spacing.lg,
+    alignItems: 'center',
   },
-  summaryLabel: { fontSize: FontSize.body, color: Colors.mediumGray, textAlign: 'center' },
-  amount: { fontSize: 36, fontWeight: '800', color: Colors.black, textAlign: 'center', marginVertical: Spacing.md },
-  divider: { height: 1, backgroundColor: Colors.lightGray, marginBottom: Spacing.md },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xs },
-  detailLabel: { fontSize: FontSize.body, color: Colors.mediumGray },
-  detailValue: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
-  sectionTitle: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black, marginBottom: Spacing.md },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  summaryLabel: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+  },
+  amount: {
+    ...Typography.headlineLg,
+    color: Colors.onSurface,
+    marginBottom: Spacing.md,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.outlineVariant,
+    width: '100%',
+    marginBottom: Spacing.md,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: Spacing.xs,
+  },
+  detailLabel: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+  },
+  detailValue: {
+    ...Typography.bodySm,
+    fontWeight: '600' as any,
+    color: Colors.onSurface,
+  },
+  sectionTitle: {
+    ...Typography.subheadSm,
+    color: Colors.onSurface,
+    marginBottom: Spacing.md,
+  },
   methodCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.white, borderRadius: BorderRadius.md,
-    padding: Spacing.md, marginBottom: Spacing.sm,
-    borderWidth: 1, borderColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderWidth: 1.5,
+    borderColor: Colors.outlineVariant,
   },
-  methodSelected: { borderColor: Colors.primary, borderWidth: 2, backgroundColor: '#FFFDE5' },
+  methodSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.surfaceContainerLow,
+  },
   methodIcon: {
-    width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.lightGray,
-    justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
   },
-  methodIconSelected: { backgroundColor: '#FFF5E0' },
-  methodIconText: { fontSize: 20 },
-  methodLabel: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black, flex: 1 },
+  methodLabel: {
+    ...Typography.bodyBase,
+    fontWeight: '600' as any,
+    color: Colors.onSurface,
+    flex: 1,
+  },
   radio: {
-    width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: Colors.border,
-    justifyContent: 'center', alignItems: 'center',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: Colors.outlineVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   radioSelected: { borderColor: Colors.primary },
   radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.primary },

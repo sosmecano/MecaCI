@@ -1,5 +1,5 @@
 import { View, StyleSheet } from 'react-native';
-import { Colors, BorderRadius, Spacing } from '../constants/theme';
+import { Colors, BorderRadius, Spacing, Shadow } from '../constants/theme';
 
 interface Props {
   children: React.ReactNode;
@@ -12,13 +12,11 @@ export default function Card({ children, style }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
-    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    ...Shadow.sm,
   },
 });

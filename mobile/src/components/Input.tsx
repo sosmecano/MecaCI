@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { TextInput, StyleSheet, View, Text } from 'react-native';
-import { Colors, FontSize, BorderRadius, Spacing } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, BorderRadius, Spacing, Typography } from '../constants/theme';
 
 interface Props {
   placeholder?: string;
@@ -19,15 +21,22 @@ export default function Input({
   placeholder, value, onChangeText, label, keyboardType,
   autoFocus, maxLength, multiline, numberOfLines, leftIcon, style,
 }: Props) {
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
     <View style={[styles.wrapper, style]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View style={styles.inputRow}>
-        {leftIcon ? <Text style={styles.leftIcon}>{leftIcon}</Text> : null}
+      <View style={[
+        styles.inputRow,
+        isFocused ? styles.inputRowFocused : {},
+      ]}>
+        {leftIcon ? (
+          <Ionicons name={leftIcon as any} size={18} color={Colors.onSurfaceVariant} style={styles.leftIcon} />
+        ) : null}
         <TextInput
-          style={[styles.input, leftIcon ? { paddingLeft: Spacing.sm } : {}, multiline ? styles.multiline : {}]}
+          style={[styles.input, leftIcon ? { paddingLeft: Spacing.xs } : {}, multiline ? styles.multiline : {}]}
           placeholder={placeholder}
-          placeholderTextColor={Colors.textSecondary}
+          placeholderTextColor={Colors.onSurfaceVariant}
           value={value}
           onChangeText={onChangeText}
           keyboardType={keyboardType}
@@ -35,6 +44,8 @@ export default function Input({
           maxLength={maxLength}
           multiline={multiline}
           numberOfLines={numberOfLines}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
         />
       </View>
     </View>
@@ -44,33 +55,35 @@ export default function Input({
 const styles = StyleSheet.create({
   wrapper: { marginBottom: Spacing.md },
   label: {
-    fontSize: FontSize.caption,
-    color: Colors.mediumGray,
-    marginBottom: Spacing.xs,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
+    marginBottom: Spacing.base,
+    fontWeight: '600' as any,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.lightGray,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.outlineVariant,
+    paddingHorizontal: 0,
+    paddingBottom: Spacing.xs,
+  },
+  inputRowFocused: {
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.primary,
   },
   leftIcon: {
-    fontSize: 16,
     marginRight: Spacing.xs,
   },
   input: {
     flex: 1,
-    height: 50,
-    fontSize: FontSize.body,
-    color: Colors.text,
+    minHeight: 48,
+    ...Typography.bodyBase,
+    color: Colors.onSurface,
   },
   multiline: {
-    height: 100,
-    paddingTop: Spacing.md,
+    minHeight: 100,
+    paddingTop: Spacing.sm,
     textAlignVertical: 'top',
   },
 });

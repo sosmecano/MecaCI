@@ -1,5 +1,6 @@
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
-import { Colors, FontSize, Spacing } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, FontSize, Spacing, BorderRadius, Shadow, Typography } from '../constants/theme';
 
 interface Props {
   icon: string;
@@ -8,22 +9,20 @@ interface Props {
   onPress: () => void;
 }
 
-const ACCENTS: Record<string, string> = {
-  'Mécanicien': '#FF6B35',
-  'Urgence': '#FF3B30',
-  'Remorquage': '#007AFF',
-  'Garages': '#34C759',
+const ACCENTS: Record<string, { color: string; ionIcon: string }> = {
+  'Mécanicien': { color: Colors.primary, ionIcon: 'build' },
+  'Urgence': { color: Colors.error, ionIcon: 'warning' },
+  'Remorquage': { color: Colors.secondary, ionIcon: 'car' },
+  'Garages': { color: Colors.tertiary, ionIcon: 'business' },
 };
 
 export default function ServiceCard({ icon, title, subtitle, onPress }: Props) {
-  const accent = ACCENTS[title] || '#666';
+  const accent = ACCENTS[title] || { color: Colors.outline, ionIcon: 'help-circle' };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.ring, { borderColor: accent + '30' }]}>
-        <View style={[styles.circle, { backgroundColor: accent }]}>
-          <Text style={styles.emoji}>{icon}</Text>
-        </View>
+      <View style={[styles.iconContainer, { backgroundColor: accent.color + '15' }]}>
+        <Ionicons name={accent.ionIcon as any} size={26} color={accent.color} />
       </View>
       <Text style={styles.title}>{title}</Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
@@ -34,36 +33,33 @@ export default function ServiceCard({ icon, title, subtitle, onPress }: Props) {
 const styles = StyleSheet.create({
   card: {
     width: '48%',
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    borderRadius: 20,
-    paddingVertical: Spacing.lg,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md + 4,
     paddingHorizontal: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    borderColor: Colors.outlineVariant,
+    ...Shadow.sm,
   },
-  ring: {
-    width: 64, height: 64, borderRadius: 32,
-    borderWidth: 3,
-    justifyContent: 'center', alignItems: 'center',
+  iconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: Spacing.sm,
   },
-  circle: {
-    width: 48, height: 48, borderRadius: 24,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  emoji: { fontSize: 24 },
   title: {
-    fontSize: FontSize.body, fontWeight: '700',
-    color: Colors.black, textAlign: 'center',
+    ...Typography.bodySm,
+    fontWeight: '700' as any,
+    color: Colors.onSurface,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: FontSize.caption, color: 'rgba(0,0,0,0.5)',
-    textAlign: 'center', marginTop: 2,
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

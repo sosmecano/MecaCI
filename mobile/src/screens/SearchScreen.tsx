@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import Button from '../components/Button';
+import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { Colors, FontSize, Spacing } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Input from '../components/Input';
+import Button from '../components/Button';
 import { api } from '../services/api';
 
 export default function SearchScreen({ navigation }: any) {
@@ -42,24 +43,28 @@ export default function SearchScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
-        <Input
-          placeholder="Que vous faut-il ?"
-          value={query}
-          onChangeText={setQuery}
-          leftIcon="🔍"
-          autoFocus
-          style={styles.input}
-        />
+        <View style={styles.searchWrap}>
+          <Input
+            placeholder="Que vous faut-il ?"
+            value={query}
+            onChangeText={setQuery}
+            leftIcon="search-outline"
+            autoFocus
+            style={styles.input}
+          />
+        </View>
       </View>
+
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : error ? (
-        <View style={{ alignItems: 'center', marginTop: Spacing.xl, paddingHorizontal: Spacing.lg }}>
-          <Text style={{ color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.md }}>{error}</Text>
+        <View style={styles.errorWrap}>
+          <Ionicons name="cloud-offline-outline" size={48} color={Colors.onSurfaceVariant} />
+          <Text style={styles.errorText}>{error}</Text>
           <Button title="Réessayer" onPress={loadPros} variant="outline" />
         </View>
       ) : (
@@ -68,22 +73,40 @@ export default function SearchScreen({ navigation }: any) {
           keyExtractor={(_, i) => String(i)}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={styles.empty}>Aucun professionnel trouvé</Text>
+            <View style={styles.emptyWrap}>
+              <Ionicons name="search" size={48} color={Colors.outlineVariant} />
+              <Text style={styles.empty}>Aucun professionnel trouvé</Text>
+            </View>
           }
           renderItem={({ item: p }) => {
             const initials = `${(p.first_name?.[0] || '')}${(p.last_name?.[0] || '')}` || '?';
             return (
-              <TouchableOpacity style={styles.item}>
-                <View style={[styles.avatar, { backgroundColor: Colors.primary }]}>
-                  <Text style={styles.avatarText}>{initials}</Text>
+              <TouchableOpacity style={styles.card}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{initials}</Text>
+                  </View>
+                  <View style={styles.info}>
+                    <Text style={styles.name}>{p.first_name} {p.last_name}</Text>
+                    <View style={styles.metaRow}>
+                      <Ionicons name="star" size={12} color={Colors.primaryContainer} />
+                      <Text style={styles.metaText}>
+                        {p.rating?.toFixed(1) || '?'} · {p.type || 'Pro'}
+                      </Text>
+                      {p.distance ? (
+                        <>
+                          <Ionicons name="location-outline" size={12} color={Colors.onSurfaceVariant} />
+                          <Text style={styles.metaText}>{p.distance.toFixed(1)} km</Text>
+                        </>
+                      ) : null}
+                    </View>
+                  </View>
                 </View>
-                <View style={styles.info}>
-                  <Text style={styles.name}>{p.first_name} {p.last_name}</Text>
-                  <Text style={styles.detail}>
-                    ⭐ {p.rating?.toFixed(1) || '?'} · {p.type || 'Pro'}{p.distance ? ` · ${p.distance.toFixed(1)} km` : ''}
-                  </Text>
-                </View>
-                {p.estimated_price && <Text style={styles.price}>{p.estimated_price}</Text>}
+                {p.estimated_price && (
+                  <View style={styles.priceBadge}>
+                    <Text style={styles.priceText}>{p.estimated_price}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           }}
@@ -96,7 +119,7 @@ export default function SearchScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.background,
   },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
@@ -105,68 +128,107 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     gap: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLowest,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: Colors.outlineVariant,
+    ...Shadow.sm,
   },
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.lightGray,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surfaceContainerHigh,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backText: {
-    fontSize: 20,
-    color: Colors.black,
+  searchWrap: {
+    flex: 1,
   },
   input: {
-    flex: 1,
     marginBottom: 0,
   },
   list: {
-    padding: Spacing.lg,
-    gap: Spacing.md,
+    padding: Spacing.md,
+    gap: Spacing.sm,
   },
-  item: {
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    ...Shadow.sm,
+  },
+  cardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    flex: 1,
   },
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryContainer,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.black,
+    ...Typography.bodySm,
+    fontWeight: '700' as any,
+    color: Colors.onPrimaryContainer,
   },
   info: {
     flex: 1,
   },
   name: {
-    fontSize: FontSize.body,
-    fontWeight: '600',
-    color: Colors.black,
+    ...Typography.bodyBase,
+    fontWeight: '600' as any,
+    color: Colors.onSurface,
   },
-  detail: {
-    fontSize: FontSize.caption,
-    color: Colors.mediumGray,
-    marginTop: 1,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
   },
-  price: {
-    fontSize: FontSize.caption,
-    fontWeight: '600',
-    color: Colors.mediumGray,
+  metaText: {
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
+  },
+  priceBadge: {
+    backgroundColor: Colors.surfaceContainerHigh,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+  },
+  priceText: {
+    ...Typography.bodySm,
+    fontWeight: '600' as any,
+    color: Colors.onSurface,
+  },
+  errorWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+  },
+  errorText: {
+    ...Typography.bodyBase,
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  emptyWrap: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xxl,
+    gap: Spacing.md,
   },
   empty: {
-    fontSize: FontSize.body,
-    color: Colors.mediumGray,
-    textAlign: 'center',
-    paddingVertical: Spacing.xxl,
+    ...Typography.bodyBase,
+    color: Colors.onSurfaceVariant,
   },
 });

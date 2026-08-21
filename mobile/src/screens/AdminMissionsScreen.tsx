@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import Button from '../components/Button';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Card from '../components/Card';
 import { api } from '../services/api';
 
@@ -70,34 +70,56 @@ export default function AdminMissionsScreen() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color={Colors.primary} /></View>
       ) : error ? (
-        <View style={{ alignItems: 'center', marginTop: Spacing.xl, paddingHorizontal: Spacing.lg }}>
-          <Text style={{ color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.md }}>{error}</Text>
-          <Button title="Réessayer" onPress={loadMissions} variant="outline" />
+        <View style={styles.errorWrap}>
+          <Ionicons name="cloud-offline-outline" size={48} color={Colors.onSurfaceVariant} />
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : missions.length === 0 ? (
-        <View style={styles.center}><Text style={styles.empty}>Aucune mission</Text></View>
+        <View style={styles.center}>
+          <Ionicons name="clipboard-outline" size={48} color={Colors.outlineVariant} />
+          <Text style={styles.empty}>Aucune mission</Text>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           {missions.map((m: any, i: number) => (
             <Card key={m.id || i} style={styles.missionCard}>
               <View style={styles.missionTop}>
-                <View style={[styles.statusDot, { backgroundColor: STATUS_COLORS[m.status] || Colors.mediumGray }]} />
+                <View style={[styles.statusDot, { backgroundColor: STATUS_COLORS[m.status] || Colors.outlineVariant }]} />
                 <Text style={styles.missionService}>{m.service_type || m.type || 'Service'}</Text>
-                <Text style={[styles.missionStatus, { color: STATUS_COLORS[m.status] || Colors.mediumGray }]}>
-                  {STATUS_LABELS[m.status] || m.status}
+                <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[m.status] || Colors.outlineVariant) + '20' }]}>
+                  <Text style={[styles.missionStatus, { color: STATUS_COLORS[m.status] || Colors.onSurfaceVariant }]}>
+                    {STATUS_LABELS[m.status] || m.status}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.detailRow}>
+                <Ionicons name="person-outline" size={14} color={Colors.onSurfaceVariant} />
+                <Text style={styles.missionClient}>
+                  {[m.user_first_name, m.user_last_name].filter(Boolean).join(' ') || m.user_phone || '—'}
                 </Text>
               </View>
-              <Text style={styles.missionClient}>
-                Client : {[m.user_first_name, m.user_last_name].filter(Boolean).join(' ') || m.user_phone || '—'}
-              </Text>
               {m.pro_first_name && (
-                <Text style={styles.missionPro}>
-                  Pro : {[m.pro_first_name, m.pro_last_name].filter(Boolean).join(' ') || m.pro_phone || '—'}
-                </Text>
+                <View style={styles.detailRow}>
+                  <Ionicons name="build-outline" size={14} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.missionPro}>
+                    {[m.pro_first_name, m.pro_last_name].filter(Boolean).join(' ') || m.pro_phone || '—'}
+                  </Text>
+                </View>
               )}
-              <Text style={styles.missionAddress}>📍 {m.location_address || m.address || '—'}</Text>
-              <Text style={styles.missionDate}>🕐 {m.created_at ? new Date(m.created_at).toLocaleDateString('fr-FR') : '—'}</Text>
-              {m.price_estimate && <Text style={styles.missionPrice}>💰 {m.price_estimate} FCFA</Text>}
+              <View style={styles.detailRow}>
+                <Ionicons name="location-outline" size={14} color={Colors.onSurfaceVariant} />
+                <Text style={styles.missionAddress}>{m.location_address || m.address || '—'}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Ionicons name="time-outline" size={14} color={Colors.onSurfaceVariant} />
+                <Text style={styles.missionDate}>{m.created_at ? new Date(m.created_at).toLocaleDateString('fr-FR') : '—'}</Text>
+              </View>
+              {m.price_estimate && (
+                <View style={styles.priceRow}>
+                  <Ionicons name="cash-outline" size={14} color={Colors.primary} />
+                  <Text style={styles.missionPrice}>{m.price_estimate} FCFA</Text>
+                </View>
+              )}
             </Card>
           ))}
         </ScrollView>
@@ -108,34 +130,43 @@ export default function AdminMissionsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border,
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.sm },
+  errorWrap: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: Spacing.xl, gap: Spacing.md,
   },
-  headerTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  filterScroll: { backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  errorText: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  header: {
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+    ...Shadow.sm,
+  },
+  headerTitle: { ...Typography.subheadSm, color: Colors.onSurface },
+  filterScroll: { backgroundColor: Colors.surfaceContainerLowest, borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant },
   filterRow: {
-    flexDirection: 'row', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
+    flexDirection: 'row', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, gap: Spacing.xs,
   },
   filterBtn: {
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full, backgroundColor: Colors.lightGray,
+    borderRadius: BorderRadius.full, backgroundColor: Colors.surfaceContainerHigh,
   },
-  filterBtnActive: { backgroundColor: Colors.black },
-  filterText: { fontSize: FontSize.caption, fontWeight: '600', color: Colors.mediumGray },
-  filterTextActive: { color: Colors.white },
-  content: { padding: Spacing.lg },
-  empty: { fontSize: FontSize.body, color: Colors.mediumGray },
-  missionCard: { marginBottom: Spacing.md },
+  filterBtnActive: { backgroundColor: Colors.primary },
+  filterText: { ...Typography.caption, fontWeight: '600' as any, color: Colors.onSurfaceVariant },
+  filterTextActive: { color: Colors.onPrimary },
+  content: { padding: Spacing.md },
+  empty: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
+  missionCard: { marginBottom: Spacing.sm },
   missionTop: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm },
-  statusDot: { width: 10, height: 10, borderRadius: 5, marginRight: Spacing.sm },
-  missionService: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black, flex: 1 },
-  missionStatus: { fontSize: FontSize.caption, fontWeight: '600' },
-  missionClient: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  missionPro: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  missionAddress: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  missionDate: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  missionPrice: { fontSize: FontSize.caption, fontWeight: '600', color: Colors.black, marginTop: 4 },
+  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: Spacing.xs },
+  missionService: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface, flex: 1 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: BorderRadius.md },
+  missionStatus: { ...Typography.caption, fontWeight: '600' as any },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: 2 },
+  missionClient: { ...Typography.caption, color: Colors.onSurfaceVariant },
+  missionPro: { ...Typography.caption, color: Colors.onSurfaceVariant },
+  missionAddress: { ...Typography.caption, color: Colors.onSurfaceVariant, flex: 1 },
+  missionDate: { ...Typography.caption, color: Colors.onSurfaceVariant },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.xs },
+  missionPrice: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
 });

@@ -5,7 +5,7 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { api } from '../services/api';
@@ -23,7 +23,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }: any) => {
     const missionId = await SecureStore.getItemAsync('tracking_mission_id');
     if (!token || !missionId || !location) return;
     try {
-      await fetch('https://mecanova.onrender.com/api/missions/${missionId}/location', {
+      await fetch(`https://mecanova.onrender.com/api/missions/${missionId}/location`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ lat: location.coords.latitude, lng: location.coords.longitude }),
@@ -277,7 +277,9 @@ export default function ProMissionScreen({ route, navigation }: any) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContent}>
-          <Text style={styles.emptyIcon}>📋</Text>
+          <View style={styles.emptyIconWrap}>
+            <Ionicons name="clipboard-outline" size={48} color={Colors.outlineVariant} />
+          </View>
           <Text style={styles.emptyTitle}>Aucune mission active</Text>
           <Text style={styles.emptySub}>En attente de nouvelle mission...</Text>
         </View>
@@ -329,14 +331,14 @@ export default function ProMissionScreen({ route, navigation }: any) {
             flat
           >
             <View style={[styles.arrowWrap, { transform: [{ rotate: `${heading}deg` }] }]}>
-              <Ionicons name="navigate" size={28} color="#FFD100" />
+              <Ionicons name="navigate" size={28} color={Colors.primaryContainer} />
             </View>
           </Marker>
         )}
         {routeCoords.length > 1 && (
           <Polyline
             coordinates={routeCoords}
-            strokeColor="#007AFF"
+            strokeColor={Colors.secondary}
             strokeWidth={4}
             lineDashPattern={[1]}
           />
@@ -349,15 +351,15 @@ export default function ProMissionScreen({ route, navigation }: any) {
       )}
       <View style={styles.mapOverlay} pointerEvents="box-none">
         <TouchableOpacity style={[styles.locateBtn, followMode && styles.locateBtnActive]} onPress={toggleFollow}>
-          <Ionicons name="locate" size={16} color={followMode ? Colors.primary : '#333'} />
+          <Ionicons name="locate" size={16} color={followMode ? Colors.primary : Colors.onSurface} />
           <Text style={[styles.locateBtnText, followMode && { color: Colors.primary }]}>Suivre</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.locateBtn} onPress={locateClient}>
-          <Ionicons name="navigate" size={16} color="#FF3B30" />
+          <Ionicons name="navigate" size={16} color={Colors.error} />
           <Text style={styles.locateBtnText}>Client</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.locateBtn} onPress={() => setMapFullscreen(!mapFullscreen)}>
-          <Ionicons name={mapFullscreen ? 'contract' : 'expand'} size={16} color="#333" />
+          <Ionicons name={mapFullscreen ? 'contract' : 'expand'} size={16} color={Colors.onSurface} />
           <Text style={styles.locateBtnText}>{mapFullscreen ? 'Réduire' : 'Plein écran'}</Text>
         </TouchableOpacity>
       </View>
@@ -398,20 +400,28 @@ export default function ProMissionScreen({ route, navigation }: any) {
                   </Text>
                   <Text style={styles.clientPhone}>{mission?.user_phone || ''}</Text>
                 </View>
+                {mission?.user_phone && (
+                  <TouchableOpacity style={styles.callBtn} onPress={() => Linking.openURL(`tel:${mission.user_phone}`).catch(() => {})}>
+                    <Ionicons name="call" size={20} color={Colors.primary} />
+                  </TouchableOpacity>
+                )}
               </View>
               <View style={styles.divider} />
               <View style={styles.clientDetailRow}>
-                <Text style={styles.clientDetailLabel}>📍 Adresse</Text>
+                <Ionicons name="location-outline" size={16} color={Colors.onSurfaceVariant} />
+                <Text style={styles.clientDetailLabel}>Adresse</Text>
                 <Text style={styles.clientDetailValue}>{mission?.location_address || mission?.address || mission?.location || 'N/A'}</Text>
               </View>
               {mission?.destination_address && (
                 <View style={styles.clientDetailRow}>
-                  <Text style={styles.clientDetailLabel}>🏁 Destination</Text>
+                  <Ionicons name="flag-outline" size={16} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.clientDetailLabel}>Destination</Text>
                   <Text style={styles.clientDetailValue}>{mission.destination_address}</Text>
                 </View>
               )}
               <View style={styles.clientDetailRow}>
-                <Text style={styles.clientDetailLabel}>🔧 Problème</Text>
+                <Ionicons name="build-outline" size={16} color={Colors.onSurfaceVariant} />
+                <Text style={styles.clientDetailLabel}>Problème</Text>
                 <Text style={styles.clientDetailValue}>{mission?.description || 'N/A'}</Text>
               </View>
             </Card>
@@ -420,7 +430,7 @@ export default function ProMissionScreen({ route, navigation }: any) {
               {steps.map((s, i) => (
                 <View key={s || String(i)} style={styles.statusRow}>
                   <View style={[styles.statusDot, i <= statusIdx && styles.statusDotActive]}>
-                    {i < statusIdx ? <Text style={styles.statusCheck}>✓</Text> : null}
+                    {i < statusIdx ? <Ionicons name="checkmark" size={12} color={Colors.onPrimary} /> : null}
                   </View>
                   <View style={styles.statusContent}>
                     <Text style={[styles.statusLabel, i <= statusIdx && styles.statusLabelActive]}>{s}</Text>
@@ -452,7 +462,7 @@ export default function ProMissionScreen({ route, navigation }: any) {
                 <Button title="Retour à l'accueil" onPress={() => navigation.goBack()} />
               </View>
             )}
-            <Button title="📞 Appeler le client" variant="secondary" onPress={() => { if (mission?.user_phone) Linking.openURL(`tel:${mission.user_phone}`).catch(() => {}); }} style={{ marginTop: Spacing.sm }} />
+            <Button title="Appeler le client" variant="secondary" onPress={() => { if (mission?.user_phone) Linking.openURL(`tel:${mission.user_phone}`).catch(() => {}); }} style={{ marginTop: Spacing.sm }} />
           </View>
         </>
       )}
@@ -464,23 +474,22 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fullContainer: { flex: 1, backgroundColor: '#000' },
-  scrollContent: { flex: 1, padding: Spacing.lg },
-  title: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black, marginBottom: Spacing.md },
-  mapCard: { borderRadius: BorderRadius.xl, overflow: 'hidden', marginBottom: Spacing.md, height: 260, padding: 0, position: 'relative' },
+  scrollContent: { flex: 1, padding: Spacing.md },
+  title: { ...Typography.titleMd, color: Colors.onSurface, marginBottom: Spacing.md },
+  mapCard: { borderRadius: BorderRadius.lg, overflow: 'hidden', marginBottom: Spacing.md, height: 260, padding: 0, position: 'relative' },
   cardMapWrap: { flex: 1, position: 'relative' },
   fullMapWrap: { flex: 1, position: 'relative', backgroundColor: '#000' },
   mapOverlay: { position: 'absolute', top: 8, right: 8, gap: 6, zIndex: 10 },
   locateBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: Colors.white, paddingVertical: 5, paddingHorizontal: 10,
+    backgroundColor: Colors.surfaceContainerLowest, paddingVertical: 5, paddingHorizontal: 10,
     borderRadius: BorderRadius.md,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15, shadowRadius: 4, elevation: 4,
+    ...Shadow.md,
   },
   locateBtnActive: {
     borderWidth: 1.5, borderColor: Colors.primary,
   },
-  locateBtnText: { fontSize: 11, fontWeight: '600', color: '#333' },
+  locateBtnText: { ...Typography.caption, fontWeight: '600' as any, color: Colors.onSurface },
   fullCloseBtn: {
     position: 'absolute', top: 12, left: 12, zIndex: 10,
     width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.5)',
@@ -489,14 +498,13 @@ const styles = StyleSheet.create({
   routeBadge: {
     position: 'absolute', bottom: 8, left: 8,
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: Colors.white, paddingVertical: 4, paddingHorizontal: 10,
+    backgroundColor: Colors.surfaceContainerLowest, paddingVertical: 4, paddingHorizontal: 10,
     borderRadius: BorderRadius.md,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1, shadowRadius: 3, elevation: 2,
+    ...Shadow.sm,
   },
-  routeBadgeText: { fontSize: 11, fontWeight: '600', color: Colors.primary },
+  routeBadgeText: { ...Typography.caption, fontWeight: '600' as any, color: Colors.primary },
   clientMarker: {
-    width: 32, height: 32, borderRadius: 16, backgroundColor: '#FF3B30',
+    width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.error,
     justifyContent: 'center', alignItems: 'center',
     borderWidth: 2, borderColor: '#fff',
   },
@@ -504,45 +512,53 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18,
     justifyContent: 'center', alignItems: 'center',
   },
-  clientCard: { padding: Spacing.lg, marginBottom: Spacing.md },
+  clientCard: { padding: Spacing.md, marginBottom: Spacing.md },
   clientRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  clientAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
-  clientAvatarText: { fontSize: 16, fontWeight: '700', color: Colors.black },
-  clientName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  clientPhone: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  divider: { height: 1, backgroundColor: Colors.lightGray, marginBottom: Spacing.md },
-  clientDetailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xs },
-  clientDetailLabel: { fontSize: FontSize.body, color: Colors.mediumGray },
-  clientDetailValue: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
+  clientAvatar: { width: 48, height: 48, borderRadius: BorderRadius.full, backgroundColor: Colors.primaryContainer, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
+  clientAvatarText: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  clientName: { ...Typography.bodyBase, fontWeight: '600' as any, color: Colors.onSurface },
+  clientPhone: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  callBtn: {
+    width: 40, height: 40, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryContainer,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  divider: { height: 1, backgroundColor: Colors.outlineVariant, marginBottom: Spacing.md },
+  clientDetailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.xs },
+  clientDetailLabel: { ...Typography.bodySm, color: Colors.onSurfaceVariant, minWidth: 80 },
+  clientDetailValue: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface, flex: 1 },
   statusFlow: { marginBottom: Spacing.md },
   statusRow: { position: 'relative', paddingLeft: 28, minHeight: 44 },
   statusDot: {
     position: 'absolute', left: 0, top: 4,
     width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2.5, borderColor: Colors.border,
+    borderWidth: 2.5, borderColor: Colors.outlineVariant,
     justifyContent: 'center', alignItems: 'center',
   },
   statusDotActive: { borderColor: Colors.primary, backgroundColor: Colors.primary },
-  statusCheck: { color: Colors.black, fontSize: 10, fontWeight: '700' },
   statusContent: { paddingBottom: Spacing.sm },
-  statusLabel: { fontSize: FontSize.body, fontWeight: '600', color: Colors.mediumGray },
-  statusLabelActive: { color: Colors.black },
-  statusTime: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
+  statusLabel: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurfaceVariant },
+  statusLabelActive: { color: Colors.onSurface },
+  statusTime: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
   emptyContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
-  emptyIcon: { fontSize: 48, marginBottom: Spacing.lg },
-  emptyTitle: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black, marginBottom: Spacing.sm },
-  emptySub: { fontSize: FontSize.body, color: Colors.mediumGray, textAlign: 'center' },
+  emptyIconWrap: {
+    width: 80, height: 80, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surfaceContainerHigh,
+    justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.md,
+  },
+  emptyTitle: { ...Typography.titleMd, color: Colors.onSurface, marginBottom: Spacing.sm },
+  emptySub: { ...Typography.bodySm, color: Colors.onSurfaceVariant, textAlign: 'center' },
   statusConnector: {
     position: 'absolute', left: 9, top: 24,
-    width: 2, height: 24, backgroundColor: Colors.border,
+    width: 2, height: 24, backgroundColor: Colors.outlineVariant,
   },
   statusConnectorActive: { backgroundColor: Colors.primary },
   arrivalBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#34C759', paddingVertical: 10, paddingHorizontal: 16,
+    backgroundColor: Colors.success, paddingVertical: 10, paddingHorizontal: 16,
     borderRadius: BorderRadius.lg, marginBottom: Spacing.md,
   },
-  arrivalBannerText: { color: '#fff', fontWeight: '700', fontSize: FontSize.body },
-  actions: { padding: Spacing.lg, paddingTop: 0 },
-  amountLabel: { fontSize: FontSize.body, color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.xs },
+  arrivalBannerText: { color: '#fff', fontWeight: '700' as any, ...Typography.bodyBase },
+  actions: { padding: Spacing.md, paddingTop: 0 },
+  amountLabel: { ...Typography.bodySm, color: Colors.onSurfaceVariant, textAlign: 'center', marginBottom: Spacing.xs },
 });

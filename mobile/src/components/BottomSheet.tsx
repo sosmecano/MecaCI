@@ -6,10 +6,10 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { BorderRadius, Spacing } from '../constants/theme';
+import { Colors, BorderRadius, Spacing, Glass, Shadow } from '../constants/theme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const COLLAPSED_VISIBLE = 440;
+const COLLAPSED_VISIBLE = 420;
 const HEADER_OFFSET = 60;
 const SNAP_COLLAPSED = SCREEN_HEIGHT - COLLAPSED_VISIBLE;
 const SNAP_EXPANDED = HEADER_OFFSET;
@@ -62,20 +62,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(255,255,255,0.82)',
-    borderTopLeftRadius: BorderRadius.xl + 4,
-    borderTopRightRadius: BorderRadius.xl + 4,
-    padding: Spacing.lg,
+    backgroundColor: Glass.background,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.safeMargin,
     paddingTop: 0,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Glass.sheetBorder,
+    ...Shadow.sheet,
   },
   handleHitArea: {
     alignItems: 'center',
@@ -85,7 +79,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: Colors.outlineVariant,
   },
   content: {
     flex: 1,

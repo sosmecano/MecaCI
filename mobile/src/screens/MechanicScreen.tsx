@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow, Glass } from '../constants/theme';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Card from '../components/Card';
 import { api } from '../services/api';
 import { connectSocket, disconnectSocket } from '../services/socket';
+
 const problems = [
-  { id: 'repair', label: '🔧 Réparation' },
-  { id: 'oil', label: '🛢️ Vidange / Entretien' },
-  { id: 'diag', label: '📋 Diagnostic' },
-  { id: 'elec', label: '⚡ Électricité' },
-  { id: 'ac', label: '❄️ Climatisation' },
+  { id: 'repair', icon: 'build', label: 'Réparation' },
+  { id: 'oil', icon: 'water', label: 'Vidange / Entretien' },
+  { id: 'diag', icon: 'document-text', label: 'Diagnostic' },
+  { id: 'elec', icon: 'flash', label: 'Électricité' },
+  { id: 'ac', icon: 'snow', label: 'Climatisation' },
 ];
 
 export default function MechanicScreen({ navigation }: any) {
@@ -104,7 +106,7 @@ export default function MechanicScreen({ navigation }: any) {
         listeningRef.current = true;
         socket.on('mission:accepted', async () => {
           if (!listeningRef.current) return;
-          const updated = await api.missions.get(mission.id);
+          await api.missions.get(mission.id);
           setStep('found');
         });
       }
@@ -116,23 +118,37 @@ export default function MechanicScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Mécanicien à domicile</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {step === 'problem' && (
           <View>
-            <Text style={styles.title}>Mécanicien à domicile</Text>
             <Text style={styles.sectionTitle}>Quel est le problème ?</Text>
             <View style={styles.problemGrid}>
-              {problems.map((p) => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[styles.problemCard, selectedProblem === p.id && styles.problemSelected]}
-                  onPress={() => setSelectedProblem(p.id)}
-                >
-                  <Text style={[styles.problemLabel, selectedProblem === p.id && styles.problemLabelSelected]}>
-                    {p.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {problems.map((p) => {
+                const isSelected = selectedProblem === p.id;
+                return (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={[styles.problemCard, isSelected && styles.problemSelected]}
+                    onPress={() => setSelectedProblem(p.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.problemIcon, isSelected && styles.problemIconSelected]}>
+                      <Ionicons name={p.icon as any} size={22} color={isSelected ? Colors.primary : Colors.onSurfaceVariant} />
+                    </View>
+                    <Text style={[styles.problemLabel, isSelected && styles.problemLabelSelected]}>
+                      {p.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
             <Button title="Continuer" onPress={() => setStep('description')} disabled={!selectedProblem} />
           </View>
@@ -140,7 +156,7 @@ export default function MechanicScreen({ navigation }: any) {
 
         {step === 'description' && (
           <View>
-            <Text style={styles.title}>Décrivez le problème</Text>
+            <Text style={styles.sectionTitle}>Décrivez le problème</Text>
             <Input
               placeholder="Le moteur fait un bruit étrange..."
               value={description}
@@ -155,7 +171,7 @@ export default function MechanicScreen({ navigation }: any) {
 
         {step === 'location' && (
           <View>
-            <Text style={styles.title}>Où êtes-vous ?</Text>
+            <Text style={styles.sectionTitle}>Où êtes-vous ?</Text>
             <View style={styles.mapWrap}>
               <MapView
                 ref={mapRef}
@@ -171,15 +187,16 @@ export default function MechanicScreen({ navigation }: any) {
                   <Marker coordinate={{ latitude: location.lat, longitude: location.lng }} title="Ma position" pinColor={Colors.primary} />
                 )}
               </MapView>
-              <TouchableOpacity style={styles.locateBtn} onPress={locateMe}>
-                <Text style={styles.locateBtnText}>📍 Me localiser</Text>
+              <TouchableOpacity style={styles.locateBtn} onPress={locateMe} activeOpacity={0.7}>
+                <Ionicons name="locate" size={18} color={Colors.primary} />
+                <Text style={styles.locateBtnText}>Me localiser</Text>
               </TouchableOpacity>
             </View>
             <Text style={styles.label}>Adresse</Text>
             <TextInput
               style={styles.input}
               placeholder="Entrez votre adresse"
-              placeholderTextColor={Colors.mediumGray}
+              placeholderTextColor={Colors.onSurfaceVariant}
               value={addressText}
               onChangeText={searchAddress}
             />
@@ -198,33 +215,36 @@ export default function MechanicScreen({ navigation }: any) {
 
         {step === 'estimation' && (
           <View>
-            <Text style={styles.title}>Estimation</Text>
-            <View style={styles.estimationCard}>
+            <Text style={styles.sectionTitle}>Estimation</Text>
+            <Card style={styles.estimationCard}>
               <View style={styles.estRow}>
-                <Text style={styles.estLabel}>📍 Lieu</Text>
+                <Ionicons name="location" size={18} color={Colors.onSurfaceVariant} />
+                <Text style={styles.estLabel}>Lieu</Text>
                 <Text style={styles.estValue} numberOfLines={2}>{addressText || 'Position sélectionnée'}</Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.estRow}>
-                <Text style={styles.estLabel}>💰 Prix estimé</Text>
+                <Ionicons name="wallet" size={18} color={Colors.primary} />
+                <Text style={styles.estLabel}>Prix estimé</Text>
                 <Text style={styles.priceValue}>8 000 - 15 000 FCFA</Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.estRow}>
-                <Text style={styles.estLabel}>🕐 Arrivée</Text>
+                <Ionicons name="time" size={18} color={Colors.onSurfaceVariant} />
+                <Text style={styles.estLabel}>Arrivée</Text>
                 <Text style={styles.estValue}>15 - 25 min</Text>
               </View>
-            </View>
+            </Card>
             <Button title="Confirmer la demande" onPress={confirmMission} />
           </View>
         )}
 
         {step === 'searching' && (
           <View style={styles.centerWrap}>
-            <View style={styles.searchingIcon}>
-              <Text style={styles.searchingIconText}>🔧</Text>
+            <View style={[styles.iconCircle, { backgroundColor: Colors.primaryContainer + '30' }]}>
+              <Ionicons name="build" size={36} color={Colors.primary} />
             </View>
-            <Text style={styles.title}>Recherche en cours...</Text>
+            <Text style={styles.sectionTitle}>Recherche en cours...</Text>
             <Text style={styles.searchText}>3 professionnels consultent votre demande</Text>
             <View style={styles.searchingBar}>
               <View style={styles.searchingProgress} />
@@ -235,24 +255,22 @@ export default function MechanicScreen({ navigation }: any) {
 
         {step === 'found' && (
           <View style={styles.centerWrap}>
-            <View style={styles.foundIcon}>
-              <Text style={styles.foundIconText}>✅</Text>
+            <View style={[styles.iconCircle, { backgroundColor: '#E8F8E8' }]}>
+              <Ionicons name="checkmark-circle" size={36} color={Colors.success} />
             </View>
-            <Text style={styles.title}>Professionnel trouvé</Text>
-            <Card style={styles.foundCard}>
-              <View style={styles.foundRow}>
-                <View style={[styles.proAvatar, { backgroundColor: Colors.primary }]}>
+            <Text style={styles.sectionTitle}>Professionnel trouvé</Text>
+            <Card style={{ width: '100%', marginBottom: Spacing.lg }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.proAvatar}>
                   <Text style={styles.proAvatarText}>?</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.proName}>Professionnel en route</Text>
-                  <Text style={styles.proSub}>⭐ en attente des détails</Text>
+                  <Text style={styles.proSub}>en attente des détails</Text>
                 </View>
               </View>
             </Card>
-            <View style={styles.actionRow}>
-              <Button title="Suivre" onPress={() => navigation.navigate('Tracking', { missionId })} style={{ flex: 1 }} />
-            </View>
+            <Button title="Suivre" onPress={() => navigation.navigate('Tracking', { missionId })} />
           </View>
         )}
       </ScrollView>
@@ -261,66 +279,75 @@ export default function MechanicScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.lg, flexGrow: 1 },
-  title: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black, marginBottom: Spacing.sm },
-  sectionTitle: { fontSize: FontSize.subtitle, fontWeight: '600', color: Colors.black, marginBottom: Spacing.md },
+  container: { flex: 1, backgroundColor: Colors.surface },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.safeMargin,
+    paddingVertical: Spacing.sm,
+  },
+  backBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.surfaceContainerHigh,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  headerTitle: { ...Typography.subheadSm, color: Colors.onSurface },
+  content: { padding: Spacing.safeMargin, flexGrow: 1 },
+  sectionTitle: { ...Typography.subheadSm, color: Colors.onSurface, marginBottom: Spacing.md },
   problemGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.lg },
   problemCard: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surfaceContainerLowest, borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.md,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.outlineVariant,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    minWidth: '48%',
   },
-  problemSelected: { borderColor: Colors.primary, backgroundColor: '#FFFDE5' },
-  problemLabel: { fontSize: FontSize.body, color: Colors.mediumGray, fontWeight: '500' },
-  problemLabelSelected: { color: Colors.black, fontWeight: '700' },
-  estimationCard: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
-    padding: Spacing.lg, marginBottom: Spacing.lg,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+  problemSelected: { borderColor: Colors.primary, backgroundColor: Colors.primaryContainer + '15' },
+  problemIcon: {
+    width: 40, height: 40, borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surfaceContainerHigh,
+    justifyContent: 'center', alignItems: 'center',
   },
-  estRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.sm },
-  estLabel: { fontSize: FontSize.body, color: Colors.mediumGray },
-  estValue: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black, flex: 1, textAlign: 'right', marginLeft: Spacing.md },
-  priceValue: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  divider: { height: 1, backgroundColor: Colors.lightGray },
+  problemIconSelected: { backgroundColor: Colors.primaryContainer + '30' },
+  problemLabel: { ...Typography.bodySm, color: Colors.onSurfaceVariant, fontWeight: '500' as any },
+  problemLabelSelected: { color: Colors.onSurface, fontWeight: '700' as any },
+  estimationCard: { marginBottom: Spacing.lg },
+  estRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm, gap: Spacing.sm },
+  estLabel: { ...Typography.bodySm, color: Colors.onSurfaceVariant, marginLeft: Spacing.xs },
+  estValue: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface, flex: 1, textAlign: 'right' },
+  priceValue: { ...Typography.subheadSm, fontWeight: '700' as any, color: Colors.onSurface },
+  divider: { height: 1, backgroundColor: Colors.surfaceContainerHigh },
   centerWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  searchingIcon: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#FFF5E0', justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.lg },
-  searchingIconText: { fontSize: 36 },
-  searchText: { fontSize: FontSize.body, color: Colors.mediumGray, textAlign: 'center' },
-  searchingBar: { height: 4, backgroundColor: Colors.lightGray, borderRadius: 2, marginVertical: Spacing.lg, width: '100%', overflow: 'hidden' },
-  searchingProgress: { width: '50%', height: '100%', backgroundColor: Colors.primary, borderRadius: 2 },
-  foundIcon: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#E8F8E8', justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.lg },
-  foundIconText: { fontSize: 36 },
-  foundCard: { width: '100%', padding: Spacing.lg, marginBottom: Spacing.lg },
-  foundRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  proAvatar: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
-  proAvatarText: { fontSize: 16, fontWeight: '700', color: Colors.black },
-  proName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  proSub: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  actionRow: { flexDirection: 'row', gap: Spacing.md, width: '100%' },
-  mapWrap: { height: 200, borderRadius: BorderRadius.xl, overflow: 'hidden', marginBottom: Spacing.md },
+  iconCircle: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.lg },
+  searchText: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  searchingBar: { height: 4, backgroundColor: Colors.surfaceContainerHigh, borderRadius: 2, marginVertical: Spacing.lg, width: '100%', overflow: 'hidden' },
+  searchingProgress: { width: '50%', height: '100%', backgroundColor: Colors.primaryContainer, borderRadius: 2 },
+  proAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primaryContainer, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
+  proAvatarText: { ...Typography.bodyBase, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  proName: { ...Typography.bodyBase, fontWeight: '700' as any, color: Colors.onSurface },
+  proSub: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  mapWrap: { height: 200, borderRadius: BorderRadius.lg, overflow: 'hidden', marginBottom: Spacing.md },
   map: { flex: 1 },
   locateBtn: {
     position: 'absolute', bottom: Spacing.sm, right: Spacing.sm,
-    backgroundColor: Colors.white, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    backgroundColor: Glass.background, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md, flexDirection: 'row', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 4,
+    gap: Spacing.xs, ...Shadow.sm,
   },
-  locateBtnText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
-  label: { fontSize: FontSize.body, color: Colors.black, fontWeight: '600', marginBottom: Spacing.sm },
+  locateBtnText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
+  label: { ...Typography.bodyBase, color: Colors.onSurface, fontWeight: '600' as any, marginBottom: Spacing.sm },
   input: {
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.md,
-    padding: Spacing.md, fontSize: FontSize.body, color: Colors.black,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+    padding: Spacing.xs, ...Typography.bodyBase, color: Colors.onSurface, minHeight: 48,
   },
   suggestions: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
+    backgroundColor: Colors.surfaceContainerLowest, borderRadius: BorderRadius.md,
+    borderWidth: 1, borderColor: Colors.outlineVariant, marginBottom: Spacing.md,
   },
   suggestionItem: {
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
-    borderBottomWidth: 1, borderBottomColor: Colors.lightGray,
+    borderBottomWidth: 1, borderBottomColor: Colors.surfaceContainerHigh,
   },
-  suggestionText: { fontSize: FontSize.body, color: Colors.black },
+  suggestionText: { ...Typography.bodySm, color: Colors.onSurface },
 });

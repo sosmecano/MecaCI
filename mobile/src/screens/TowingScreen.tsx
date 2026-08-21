@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow, Glass } from '../constants/theme';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { api } from '../services/api';
@@ -179,9 +180,15 @@ export default function TowingScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Remorquage</Text>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Remorquage</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {step === 'form' && (
           <View>
             <View style={styles.mapWrap}>
@@ -197,25 +204,26 @@ export default function TowingScreen({ navigation }: any) {
                 onPress={onMapPress}
               >
                 {departCoords && (
-                  <Marker coordinate={{ latitude: departCoords.lat, longitude: departCoords.lng }} title="Départ" pinColor="#4A90D9" />
+                  <Marker coordinate={{ latitude: departCoords.lat, longitude: departCoords.lng }} title="Départ" pinColor={Colors.secondary} />
                 )}
                 {destCoords && (
-                  <Marker coordinate={{ latitude: destCoords.lat, longitude: destCoords.lng }} title="Destination" pinColor="#FF3B30" />
+                  <Marker coordinate={{ latitude: destCoords.lat, longitude: destCoords.lng }} title="Destination" pinColor={Colors.error} />
                 )}
               </MapView>
-              <TouchableOpacity style={styles.locateBtn} onPress={locateMe}>
-                <Text style={styles.locateBtnText}>📍 Me localiser</Text>
+              <TouchableOpacity style={styles.locateBtn} onPress={locateMe} activeOpacity={0.7}>
+                <Ionicons name="locate" size={18} color={Colors.primary} />
+                <Text style={styles.locateBtnText}>Me localiser</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.currentLocation}>
-              <Text style={styles.pinIcon}>📍</Text>
+              <Ionicons name="location" size={20} color={Colors.secondary} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.locLabel}>Départ</Text>
                 <TextInput
                   style={styles.locInput}
                   placeholder="Adresse de départ"
-                  placeholderTextColor={Colors.mediumGray}
+                  placeholderTextColor={Colors.onSurfaceVariant}
                   value={departText}
                   onChangeText={(t) => searchNominatim(t, 'depart')}
                 />
@@ -235,7 +243,7 @@ export default function TowingScreen({ navigation }: any) {
             <TextInput
               style={styles.input}
               placeholder="Saisissez une adresse..."
-              placeholderTextColor={Colors.mediumGray}
+              placeholderTextColor={Colors.onSurfaceVariant}
               value={destText}
               onChangeText={(t) => searchNominatim(t, 'dest')}
             />
@@ -250,18 +258,20 @@ export default function TowingScreen({ navigation }: any) {
             )}
 
             {destCoords && distance !== null && (
-              <View style={styles.estimationCard}>
+              <Card style={styles.estimationCard}>
                 <View style={styles.estRow}>
-                  <Text style={styles.estLabel}>📏 Distance</Text>
+                  <Ionicons name="resize" size={18} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.estLabel}>Distance</Text>
                   <Text style={styles.estValue}>{distance.toFixed(1)} km</Text>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.estRow}>
-                  <Text style={styles.estLabel}>💰 Prix estimé</Text>
+                  <Ionicons name="wallet" size={18} color={Colors.primary} />
+                  <Text style={styles.estLabel}>Prix estimé</Text>
                   <Text style={styles.priceValue}>{price?.toLocaleString()} FCFA</Text>
                 </View>
                 <Text style={styles.estNote}>Base 5 000 FCFA · 1 000 FCFA/km supplémentaire</Text>
-              </View>
+              </Card>
             )}
 
             <Button
@@ -270,13 +280,23 @@ export default function TowingScreen({ navigation }: any) {
               loading={loading}
               disabled={!destCoords || !departCoords}
             />
+
+            <TouchableOpacity
+              style={styles.seeTrucksBtn}
+              onPress={() => navigation.navigate('TowTrucks')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="car" size={18} color={Colors.primary} />
+              <Text style={styles.seeTrucksText}>Voir les remorqueurs disponibles</Text>
+              <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
+            </TouchableOpacity>
           </View>
         )}
 
         {step === 'sending' && (
           <View style={styles.centerWrap}>
-            <View style={styles.pulseCircle}>
-              <Text style={styles.icon}>🚛</Text>
+            <View style={[styles.pulseCircle, { backgroundColor: Colors.secondaryContainer + '30' }]}>
+              <Ionicons name="car" size={40} color={Colors.secondary} />
             </View>
             <Text style={styles.statusTitle}>Envoi de la demande</Text>
             <Text style={styles.subtitle}>Recherche d'un remorqueur disponible...</Text>
@@ -288,8 +308,8 @@ export default function TowingScreen({ navigation }: any) {
 
         {step === 'waiting' && (
           <View style={styles.centerWrap}>
-            <View style={styles.pulseCircle}>
-              <Text style={styles.icon}>🆘</Text>
+            <View style={[styles.pulseCircle, { backgroundColor: Colors.secondaryContainer + '30' }]}>
+              <Ionicons name="hourglass" size={40} color={Colors.secondary} />
             </View>
             <Text style={styles.statusTitle}>Demande envoyée</Text>
             <Text style={styles.subtitle}>En attente qu'un remorqueur accepte...</Text>
@@ -302,20 +322,22 @@ export default function TowingScreen({ navigation }: any) {
 
         {step === 'accepted' && (
           <View style={styles.centerWrap}>
-            <View style={styles.etaCircle}>
-              <Text style={styles.icon}>🛵</Text>
+            <View style={[styles.etaCircle, { backgroundColor: Colors.secondaryContainer + '30' }]}>
+              <Ionicons name="car" size={36} color={Colors.secondary} />
             </View>
             <Text style={styles.statusTitle}>Remorqueur en route</Text>
             <Card style={styles.trackingCard}>
               <View style={styles.trackingPro}>
-                <View style={[styles.proAvatar, { backgroundColor: Colors.primary }]}>
+                <View style={styles.proAvatar}>
                   <Text style={styles.proAvatarText}>
                     {((pro?.pro_first_name?.[0] || '') + (pro?.pro_last_name?.[0] || '')) || '?'}
                   </Text>
                 </View>
                 <View>
                   <Text style={styles.trackingName}>{pro?.pro_first_name || ''} {pro?.pro_last_name || ''}</Text>
-                  <Text style={styles.trackingRating}>⭐ {pro?.pro_rating?.toFixed(1) || '?'}</Text>
+                  <Text style={styles.trackingRating}>
+                    <Ionicons name="star" size={12} color={Colors.primaryContainer} /> {pro?.pro_rating?.toFixed(1) || '?'}
+                  </Text>
                 </View>
                 <Text style={styles.trackingEta}>en route</Text>
               </View>
@@ -324,7 +346,7 @@ export default function TowingScreen({ navigation }: any) {
               </View>
             </Card>
             <View style={styles.actionRow}>
-              <Button title="📞 Appeler" onPress={() => {}} variant="secondary" style={{ flex: 1 }} />
+              <Button title="Appeler" onPress={() => {}} variant="secondary" style={{ flex: 1 }} />
               <Button title="Suivre" onPress={() => navigation.navigate('Tracking', { missionId })} variant="secondary" style={{ flex: 1 }} />
             </View>
           </View>
@@ -335,76 +357,95 @@ export default function TowingScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white },
-  content: { padding: Spacing.lg, flexGrow: 1 },
-  title: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black, marginBottom: Spacing.md },
-  mapWrap: { height: 180, borderRadius: BorderRadius.xl, overflow: 'hidden', marginBottom: Spacing.md },
+  container: { flex: 1, backgroundColor: Colors.surface },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.safeMargin,
+    paddingVertical: Spacing.sm,
+  },
+  backBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.surfaceContainerHigh,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  headerTitle: { ...Typography.subheadSm, color: Colors.onSurface },
+  content: { padding: Spacing.safeMargin, flexGrow: 1 },
+  mapWrap: { height: 180, borderRadius: BorderRadius.lg, overflow: 'hidden', marginBottom: Spacing.md },
   map: { flex: 1 },
   currentLocation: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.md,
-    padding: Spacing.md, marginBottom: Spacing.md,
+    backgroundColor: Colors.surfaceContainerHigh, borderRadius: BorderRadius.md,
+    padding: Spacing.md, marginBottom: Spacing.md, gap: Spacing.sm,
   },
-  pinIcon: { fontSize: 20, marginRight: Spacing.md },
-  locLabel: { fontSize: FontSize.caption, color: Colors.mediumGray, fontWeight: '500' },
-  locValue: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
-  locInput: { fontSize: FontSize.body, color: Colors.black, padding: 0, margin: 0 },
-  inputLabel: { fontSize: FontSize.body, color: Colors.black, fontWeight: '600', marginBottom: Spacing.sm },
+  locLabel: { ...Typography.caption, color: Colors.onSurfaceVariant, fontWeight: '500' as any },
+  locInput: { ...Typography.bodyBase, color: Colors.onSurface, padding: 0, margin: 0 },
+  inputLabel: { ...Typography.bodyBase, color: Colors.onSurface, fontWeight: '600' as any, marginBottom: Spacing.sm },
   input: {
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.md,
-    padding: Spacing.md, fontSize: FontSize.body, color: Colors.black,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+    padding: Spacing.xs, ...Typography.bodyBase, color: Colors.onSurface, minHeight: 48,
   },
   suggestions: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surfaceContainerLowest, borderRadius: BorderRadius.md,
+    borderWidth: 1, borderColor: Colors.outlineVariant,
     marginTop: 4, marginBottom: Spacing.md,
   },
   suggestionItem: {
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
-    borderBottomWidth: 1, borderBottomColor: Colors.lightGray,
+    borderBottomWidth: 1, borderBottomColor: Colors.surfaceContainerHigh,
   },
-  suggestionText: { fontSize: FontSize.body, color: Colors.black },
-  estimationCard: {
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.xl,
-    padding: Spacing.lg, marginVertical: Spacing.md,
-  },
-  estRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.xs },
-  estLabel: { fontSize: FontSize.body, color: Colors.mediumGray },
-  estValue: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
-  priceValue: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  estNote: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: Spacing.xs },
-  divider: { height: 1, backgroundColor: Colors.border, marginVertical: Spacing.xs },
+  suggestionText: { ...Typography.bodySm, color: Colors.onSurface },
+  estimationCard: { marginVertical: Spacing.md },
+  estRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.xs, gap: Spacing.sm },
+  estLabel: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
+  estValue: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
+  priceValue: { ...Typography.subheadSm, fontWeight: '700' as any, color: Colors.onSurface },
+  estNote: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: Spacing.xs },
+  divider: { height: 1, backgroundColor: Colors.surfaceContainerHigh, marginVertical: Spacing.xs },
   centerWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   pulseCircle: {
     width: 100, height: 100, borderRadius: 50,
-    backgroundColor: '#E5F0FF', justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     alignSelf: 'center', marginBottom: Spacing.lg,
   },
-  icon: { fontSize: 44 },
-  statusTitle: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black, textAlign: 'center', marginBottom: Spacing.sm },
-  subtitle: { fontSize: FontSize.body, color: Colors.mediumGray, textAlign: 'center' },
-  searchingBar: { height: 4, backgroundColor: Colors.lightGray, borderRadius: 2, marginVertical: Spacing.lg, overflow: 'hidden', width: '100%' },
-  searchingProgress: { width: '40%', height: '100%', backgroundColor: Colors.primary, borderRadius: 2 },
+  statusTitle: { ...Typography.titleMd, color: Colors.onSurface, textAlign: 'center', marginBottom: Spacing.sm },
+  subtitle: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  searchingBar: { height: 4, backgroundColor: Colors.surfaceContainerHigh, borderRadius: 2, marginVertical: Spacing.lg, overflow: 'hidden', width: '100%' },
+  searchingProgress: { width: '40%', height: '100%', backgroundColor: Colors.primaryContainer, borderRadius: 2 },
   etaCircle: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#E5F0FF', justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     alignSelf: 'center', marginBottom: Spacing.lg,
   },
   trackingCard: { marginBottom: Spacing.lg, padding: Spacing.lg, width: '100%' },
   trackingPro: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  proAvatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
-  proAvatarText: { fontSize: 14, fontWeight: '700', color: Colors.black },
-  trackingName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  trackingRating: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  trackingEta: { fontSize: FontSize.subtitle, fontWeight: '800', color: Colors.black, marginLeft: 'auto' },
-  trackingBar: { height: 6, backgroundColor: Colors.lightGray, borderRadius: 3, overflow: 'hidden' },
-  trackingProgress: { width: '60%', height: '100%', backgroundColor: Colors.primary, borderRadius: 3 },
-  actionRow: { flexDirection: 'row', gap: Spacing.md, width: '100%' },
+  proAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primaryContainer, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
+  proAvatarText: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  trackingName: { ...Typography.bodyBase, fontWeight: '700' as any, color: Colors.onSurface },
+  trackingRating: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  trackingEta: { ...Typography.subheadSm, color: Colors.onSurface, marginLeft: 'auto' },
+  trackingBar: { height: 6, backgroundColor: Colors.surfaceContainerHigh, borderRadius: 3, overflow: 'hidden' },
+  trackingProgress: { width: '60%', height: '100%', backgroundColor: Colors.primaryContainer, borderRadius: 3 },
+  actionRow: { flexDirection: 'row', gap: Spacing.sm, width: '100%' },
   locateBtn: {
     position: 'absolute', bottom: Spacing.sm, right: Spacing.sm,
-    backgroundColor: Colors.white, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    backgroundColor: Glass.background, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md, flexDirection: 'row', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 4,
+    gap: Spacing.xs, ...Shadow.sm,
   },
-  locateBtnText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
+  locateBtnText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
+  seeTrucksBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  seeTrucksText: {
+    ...Typography.bodySm,
+    fontWeight: '600' as any,
+    color: Colors.primary,
+  },
 });

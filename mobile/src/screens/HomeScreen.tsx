@@ -1,32 +1,38 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
-import Button from '../components/Button';
+import {
+  View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
+  ActivityIndicator, ScrollView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { Colors, FontSize, Spacing } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Shadow, Typography, Glass } from '../constants/theme';
 import BottomSheet from '../components/BottomSheet';
 import ServiceCard from '../components/ServiceCard';
 import { api } from '../services/api';
 
 const TYPE_COLORS: Record<string, string> = {
-  mechanic: '#FFD100',
-  tow_truck: '#4A90D9',
-  garage: '#34C759',
+  mechanic: Colors.primaryContainer,
+  tow_truck: Colors.secondary,
+  garage: Colors.tertiary,
 };
 
 const services = [
-  { icon: '🔧', title: 'Mécanicien', subtitle: 'À domicile', screen: 'MechanicService' },
-  { icon: '⚡', title: 'Urgence', subtitle: 'SOS panne', screen: 'SOSPanic' },
-  { icon: '🚛', title: 'Remorquage', subtitle: 'Vers un garage', screen: 'Towing' },
-  { icon: '🏪', title: 'Garages', subtitle: 'À proximité', screen: 'Garages' },
+  { icon: 'build', title: 'Mecanicien', subtitle: 'A domicile', screen: 'MechanicService' },
+  { icon: 'warning', title: 'Urgence', subtitle: 'SOS panne', screen: 'SOSPanic' },
+  { icon: 'car', title: 'Remorquage', subtitle: 'Vers un garage', screen: 'Towing' },
+  { icon: 'business', title: 'Garages', subtitle: 'A proximite', screen: 'Garages' },
 ];
 
 export default function HomeScreen({ navigation }: any) {
   const [location, setLocation] = useState<any>(null);
+  const [cityName, setCityName] = useState("Abidjan, Cote d'Ivoire");
   const [nearbyPros, setNearbyPros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<MapView>(null);
+
+  const openDrawer = () => navigation.openDrawer();
 
   const loadData = async () => {
     setError(null);
@@ -37,8 +43,19 @@ export default function HomeScreen({ navigation }: any) {
       const loc = await Location.getCurrentPositionAsync({});
       setLocation(loc.coords);
 
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+      if (reverseGeocode.length > 0) {
+        const addr = reverseGeocode[0];
+        if (addr.city && addr.country) {
+          setCityName(`${addr.city}, ${addr.country}`);
+        }
+      }
+
       const pros = await api.missions.nearbyPros(loc.coords.latitude, loc.coords.longitude);
-      setNearbyPros(pros.slice(0, 2));
+      setNearbyPros(pros.slice(0, 5));
     } catch (e: any) {
       setError(e.message || 'Erreur de chargement');
     } finally {
@@ -46,9 +63,7 @@ export default function HomeScreen({ navigation }: any) {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   useEffect(() => {
     if (!location) return;
@@ -59,6 +74,18 @@ export default function HomeScreen({ navigation }: any) {
       longitudeDelta: 0.05,
     }, 800);
   }, [location]);
+
+  const formatPrice = (pro: any) => {
+    if (pro.estimated_price) return pro.estimated_price;
+    if (pro.price_per_hour) return `${pro.price_per_hour.toLocaleString()} FCFA/h`;
+    return '';
+  };
+
+  const proTypeLabel = (type: string) => {
+    if (type === 'mechanic') return 'Mecanicien';
+    if (type === 'tow_truck') return 'Depanneur';
+    return 'Garage';
+  };
 
   return (
     <View style={styles.container}>
@@ -80,8 +107,8 @@ export default function HomeScreen({ navigation }: any) {
               key={pro.id || i}
               coordinate={{ latitude: pro.zone_center_lat, longitude: pro.zone_center_lng }}
               title={`${pro.first_name} ${pro.last_name}`}
-              description={`${pro.type || 'Pro'} · ⭐ ${pro.rating?.toFixed(1) || '?'}`}
-              pinColor={TYPE_COLORS[pro.type] || Colors.primary}
+              description={`${proTypeLabel(pro.type)} - ${pro.rating?.toFixed(1) || '?'}`}
+              pinColor={TYPE_COLORS[pro.type] || Colors.primaryContainer}
             />
           ) : null
         )}
@@ -89,27 +116,41 @@ export default function HomeScreen({ navigation }: any) {
 
       <SafeAreaView style={styles.topOverlay}>
         <View style={styles.header}>
-          <View style={styles.locationPill}>
-            <Text style={styles.locationDot}>●</Text>
-            <Text style={styles.locationText}>
-              {location ? `${location.latitude.toFixed(2)}, ${location.longitude.toFixed(2)}` : 'Cocody, Angré'}
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.profileBtn} onPress={() => navigation.navigate('Profil')}>
-            <Text style={styles.profileIcon}>👤</Text>
+          <TouchableOpacity style={styles.hamburgerBtn} onPress={openDrawer} activeOpacity={0.7}>
+            <Ionicons name="menu" size={22} color={Colors.onSurface} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.locationPill} activeOpacity={0.7}>
+            <Ionicons name="location-sharp" size={18} color={Colors.primary} />
+            <Text style={styles.locationText} numberOfLines={1}>{cityName}</Text>
+            <Ionicons name="chevron-down" size={16} color={Colors.onSurfaceVariant} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.profileBtn}
+            onPress={() => navigation.navigate('Profil')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="person" size={20} color={Colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
 
-      <TouchableOpacity style={styles.sosFab} onPress={() => navigation.navigate('SOSPanic')}>
-        <Text style={styles.sosText}>SOS</Text>
+      <TouchableOpacity
+        style={styles.sosFab}
+        onPress={() => navigation.navigate('SOSPanic')}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="warning" size={24} color={Colors.onError} />
       </TouchableOpacity>
 
       <BottomSheet>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <TouchableOpacity style={styles.searchBar} onPress={() => navigation.navigate('Search')}>
-            <Text style={styles.searchIcon}>🔍</Text>
-            <Text style={styles.searchPlaceholder}>Que vous faut-il ?</Text>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <TouchableOpacity
+            style={styles.searchBar}
+            onPress={() => navigation.navigate('Search')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="search" size={18} color={Colors.onSurfaceVariant} />
+            <Text style={styles.searchPlaceholder}>Rechercher un mecanicien, garage...</Text>
           </TouchableOpacity>
 
           <View style={styles.servicesGrid}>
@@ -124,42 +165,47 @@ export default function HomeScreen({ navigation }: any) {
             ))}
           </View>
 
-          <View style={styles.nearbyRow}>
-            <Text style={styles.nearbyTitle}>Professionnels proches</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Garages')}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Professionnels proches</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Services')} activeOpacity={0.6}>
               <Text style={styles.seeAll}>Voir tout</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.prosList}>
-            {loading ? (
-              <ActivityIndicator size="small" color={Colors.primary} />
-            ) : error ? (
-              <View style={{ alignItems: 'center', marginTop: Spacing.md }}>
-                <Text style={{ color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.sm }}>{error}</Text>
-                <Button title="Réessayer" onPress={loadData} variant="outline" />
-              </View>
-            ) : nearbyPros.length === 0 ? (
-              <Text style={styles.noPros}>Aucun professionnel disponible</Text>
-            ) : (
-              nearbyPros.map((pro: any, i: number) => (
-                <View key={pro.id || i} style={styles.proItem}>
-                  <View style={[styles.proAvatar, { backgroundColor: i === 0 ? Colors.primary : '#E5F0FF' }]}>
-                    <Text style={[styles.proAvatarText, { color: i === 0 ? Colors.black : Colors.black }]}>
-                      {((pro.first_name?.[0] || '') + (pro.last_name?.[0] || '')) || '?'}
-                    </Text>
-                  </View>
-                  <View style={styles.proInfo}>
-                    <Text style={styles.proName}>{pro.first_name} {pro.last_name}</Text>
-                    <Text style={styles.proDetail}>
-                      ⭐ {pro.rating?.toFixed(1) || '?'} · {pro.type || 'Pro'} · {pro.distance ? `${pro.distance.toFixed(1)} km` : '?'}
-                    </Text>
-                  </View>
-                  <Text style={styles.proPrice}>{pro.estimated_price || ''}</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: Spacing.md }} />
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : nearbyPros.length === 0 ? (
+            <Text style={styles.noPros}>Aucun professionnel disponible autour de vous</Text>
+          ) : (
+            nearbyPros.map((pro: any, i: number) => (
+              <TouchableOpacity key={pro.id || i} style={styles.proCard} activeOpacity={0.7}>
+                <View style={[styles.proAvatar, { backgroundColor: i === 0 ? Colors.primaryContainer : Colors.surfaceContainerHigh }]}>
+                  <Text style={[styles.proAvatarText, { color: i === 0 ? Colors.onPrimaryContainer : Colors.onSurface }]}>
+                    {((pro.first_name?.[0] || '') + (pro.last_name?.[0] || '')) || '?'}
+                  </Text>
                 </View>
-              ))
-            )}
-          </View>
+                <View style={styles.proInfo}>
+                  <Text style={styles.proName}>{pro.first_name} {pro.last_name}</Text>
+                  <Text style={styles.proType}>{proTypeLabel(pro.type)}</Text>
+                  <View style={styles.proMeta}>
+                    <Ionicons name="star" size={12} color={Colors.primaryContainer} />
+                    <Text style={styles.proRating}>{pro.rating?.toFixed(1) || '-'}</Text>
+                    <Text style={styles.proDot}>-</Text>
+                    <Text style={styles.proDistance}>{pro.distance ? `${pro.distance.toFixed(1)} km` : '-'}</Text>
+                    <Text style={styles.proDot}>-</Text>
+                    <Text style={styles.proPrice}>{formatPrice(pro)}</Text>
+                  </View>
+                </View>
+                <View style={styles.proArrow}>
+                  <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </ScrollView>
       </BottomSheet>
     </View>
@@ -185,155 +231,183 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.safeMargin,
     paddingVertical: Spacing.sm,
+    gap: Spacing.xs,
   },
-  locationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  locationDot: {
-    color: Colors.primary,
-    fontSize: 10,
-    marginRight: 6,
-  },
-  locationText: {
-    fontSize: FontSize.body,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  profileBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.white,
+  hamburgerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Glass.background,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...Shadow.sm,
   },
-  profileIcon: {
-    fontSize: 18,
+  locationPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Glass.background,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: BorderRadius.full,
+    gap: 6,
+    ...Shadow.sm,
+  },
+  locationText: {
+    ...Typography.bodySm,
+    fontWeight: '600' as any,
+    color: Colors.onSurface,
+    maxWidth: 180,
+  },
+  profileBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Glass.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadow.sm,
   },
   sosFab: {
     position: 'absolute',
     bottom: 120,
-    right: Spacing.md,
+    right: Spacing.safeMargin,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.sos,
+    backgroundColor: Colors.error,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.sos,
+    shadowColor: Colors.error,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 6,
     zIndex: 10,
   },
-  sosText: {
-    color: Colors.white,
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1,
+  scrollContent: {
+    paddingBottom: 100,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 12,
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
-    height: 50,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
-  },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: Spacing.sm,
+    height: 48,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
   },
   searchPlaceholder: {
-    fontSize: FontSize.body,
-    color: Colors.textSecondary,
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
   },
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 12,
-    marginBottom: Spacing.lg,
+    rowGap: Spacing.sm,
+    marginBottom: Spacing.xl,
   },
-  nearbyRow: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
-  nearbyTitle: {
-    fontSize: FontSize.subtitle,
-    fontWeight: '700',
-    color: Colors.black,
+  sectionTitle: {
+    ...Typography.subheadSm,
+    color: Colors.onSurface,
   },
   seeAll: {
-    fontSize: FontSize.body,
-    color: Colors.mediumGray,
-    fontWeight: '600',
+    ...Typography.bodySm,
+    color: Colors.primary,
+    fontWeight: '600' as any,
   },
-  prosList: {
-    gap: Spacing.sm,
-  },
-  proItem: {
+  proCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    ...Shadow.sm,
   },
   proAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.primary,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: Spacing.md,
   },
   proAvatarText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.black,
+    ...Typography.bodySm,
+    fontWeight: '700' as any,
   },
   proInfo: {
     flex: 1,
   },
   proName: {
-    fontSize: FontSize.body,
-    fontWeight: '600',
-    color: Colors.black,
+    ...Typography.bodySm,
+    fontWeight: '700' as any,
+    color: Colors.onSurface,
+    marginBottom: 2,
   },
-  proDetail: {
-    fontSize: FontSize.caption,
-    color: Colors.mediumGray,
-    marginTop: 1,
+  proType: {
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
+    marginBottom: 4,
+  },
+  proMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  proRating: {
+    ...Typography.caption,
+    fontWeight: '600' as any,
+    color: Colors.onSurface,
+  },
+  proDot: {
+    ...Typography.caption,
+    color: Colors.outline,
+    marginHorizontal: 2,
+  },
+  proDistance: {
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
   },
   proPrice: {
-    fontSize: FontSize.caption,
-    fontWeight: '600',
-    color: Colors.mediumGray,
+    ...Typography.caption,
+    fontWeight: '700' as any,
+    color: Colors.onSurface,
+  },
+  proArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primaryContainer + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  errorText: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
   },
   noPros: {
-    fontSize: FontSize.body,
-    color: Colors.mediumGray,
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
     textAlign: 'center',
     paddingVertical: Spacing.md,
   },

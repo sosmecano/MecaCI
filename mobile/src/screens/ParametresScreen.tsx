@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, TextInput, Switch, Alert, ActivityIndicator, Image } from 'react-native';
-import Button from '../components/Button';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
+import Button from '../components/Button';
+import Card from '../components/Card';
 import { api } from '../services/api';
 
 export default function ParametresScreen({ navigation }: any) {
@@ -86,7 +88,7 @@ export default function ParametresScreen({ navigation }: any) {
       });
       setUser(updated);
       setEditing(false);
-      Alert.alert('✅ Enregistré', 'Vos modifications ont été sauvegardées.');
+      Alert.alert('Enregistré', 'Vos modifications ont été sauvegardées.');
     } catch (e: any) {
       Alert.alert('Erreur', e.message);
     } finally {
@@ -105,73 +107,60 @@ export default function ParametresScreen({ navigation }: any) {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.lg }}>
-          <Text style={{ color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.md }}>{error}</Text>
+        <View style={styles.errorWrap}>
+          <Ionicons name="cloud-offline-outline" size={48} color={Colors.onSurfaceVariant} />
+          <Text style={styles.errorText}>{error}</Text>
           <Button title="Réessayer" onPress={loadProfile} variant="outline" />
         </View>
       </SafeAreaView>
     );
   }
 
+  const initials = ((user?.first_name || '')[0] || '') + ((user?.last_name || '')[0] || '') || '?';
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backArrow}>←</Text>
+          <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Paramètres</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Avatar */}
         <TouchableOpacity style={styles.avatarWrap} onPress={pickPhoto} disabled={pickingPhoto}>
           {photoUri ? (
             <Image source={{ uri: photoUri }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarPlaceholderText}>
-                {((user?.first_name || '')[0] || '') + ((user?.last_name || '')[0] || '') || '?'}
-              </Text>
+              <Text style={styles.avatarPlaceholderText}>{initials}</Text>
             </View>
           )}
           <View style={styles.cameraBadge}>
-            <Text style={styles.cameraIcon}>📷</Text>
+            <Ionicons name="camera" size={14} color={Colors.white} />
           </View>
           {pickingPhoto && <ActivityIndicator size="small" color={Colors.white} style={StyleSheet.absoluteFill} />}
         </TouchableOpacity>
 
-        {/* Profile */}
         <Text style={styles.sectionTitle}>Profil</Text>
-        <View style={styles.card}>
+        <Card style={styles.card}>
           {editing ? (
             <>
-              <View style={styles.field}>
-                <Text style={styles.label}>Prénom</Text>
-                <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Prénom" />
-              </View>
-              <View style={styles.field}>
-                <Text style={styles.label}>Nom</Text>
-                <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Nom" />
-              </View>
-              <View style={styles.field}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="email@exemple.com" keyboardType="email-address" autoCapitalize="none" />
-              </View>
-              <View style={styles.field}>
-                <Text style={styles.label}>Ville</Text>
-                <TextInput style={styles.input} value={city} onChangeText={setCity} placeholder="Abidjan" />
-              </View>
+              <EditField label="Prénom" value={firstName} onChangeText={setFirstName} />
+              <EditField label="Nom" value={lastName} onChangeText={setLastName} />
+              <EditField label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+              <EditField label="Ville" value={city} onChangeText={setCity} last />
             </>
           ) : (
             <>
-              <ProfileRow label="Prénom" value={firstName} />
-              <ProfileRow label="Nom" value={lastName} />
-              <ProfileRow label="Email" value={email || '—'} />
-              <ProfileRow label="Téléphone" value={user?.phone || '—'} last />
+              <ProfileRow icon="person-outline" label="Prénom" value={firstName} />
+              <ProfileRow icon="person-outline" label="Nom" value={lastName} />
+              <ProfileRow icon="mail-outline" label="Email" value={email || '—'} />
+              <ProfileRow icon="call-outline" label="Téléphone" value={user?.phone || '—'} last />
             </>
           )}
-        </View>
+        </Card>
 
         {editing ? (
           <View style={styles.editActions}>
@@ -184,39 +173,45 @@ export default function ParametresScreen({ navigation }: any) {
           </View>
         ) : (
           <TouchableOpacity style={styles.editBtn} onPress={() => setEditing(true)}>
-            <Text style={styles.editBtnText}>✏️ Modifier mes informations</Text>
+            <Ionicons name="create-outline" size={18} color={Colors.primary} />
+            <Text style={styles.editBtnText}>Modifier mes informations</Text>
           </TouchableOpacity>
         )}
 
-        {/* Preferences */}
         <Text style={styles.sectionTitle}>Préférences</Text>
-        <View style={styles.card}>
+        <Card style={styles.card}>
           <View style={styles.prefRow}>
-            <Text style={styles.prefLabel}>Notifications</Text>
+            <View style={styles.prefLeft}>
+              <Ionicons name="notifications-outline" size={20} color={Colors.onSurfaceVariant} />
+              <Text style={styles.prefLabel}>Notifications</Text>
+            </View>
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: Colors.border, true: Colors.primary }}
-              thumbColor={Colors.white}
+              trackColor={{ false: Colors.outlineVariant, true: Colors.primaryContainer }}
+              thumbColor={notifications ? Colors.primary : Colors.outline}
             />
           </View>
           <View style={[styles.prefRow, styles.prefRowLast]}>
-            <Text style={styles.prefLabel}>Langue</Text>
+            <View style={styles.prefLeft}>
+              <Ionicons name="language-outline" size={20} color={Colors.onSurfaceVariant} />
+              <Text style={styles.prefLabel}>Langue</Text>
+            </View>
             <TouchableOpacity onPress={() => setLanguage(language === 'fr' ? 'en' : 'fr')} style={styles.langBtn}>
-              <Text style={styles.langText}>{language === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}</Text>
+              <Text style={styles.langText}>{language === 'fr' ? 'Français' : 'English'}</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Card>
 
-        {/* About */}
         <Text style={styles.sectionTitle}>À propos</Text>
-        <View style={styles.card}>
-          <ProfileRow label="Version" value="1.0.0" />
-          <ProfileRow label="Développeur" value="Mecanova" last />
-        </View>
+        <Card style={styles.card}>
+          <ProfileRow icon="information-circle-outline" label="Version" value="1.0.0" />
+          <ProfileRow icon="code-outline" label="Développeur" value="Mecanova" last />
+        </Card>
 
         <TouchableOpacity style={styles.deleteBtn}>
-          <Text style={styles.deleteText}>🗑 Supprimer mon compte</Text>
+          <Ionicons name="trash-outline" size={18} color={Colors.error} />
+          <Text style={styles.deleteText}>Supprimer mon compte</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -225,11 +220,30 @@ export default function ParametresScreen({ navigation }: any) {
   );
 }
 
-function ProfileRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
+function ProfileRow({ icon, label, value, last }: { icon: string; label: string; value: string; last?: boolean }) {
   return (
     <View style={[styles.row, last && styles.rowLast]}>
-      <Text style={styles.rowLabel}>{label}</Text>
+      <View style={styles.rowLeft}>
+        <Ionicons name={icon as any} size={18} color={Colors.onSurfaceVariant} />
+        <Text style={styles.rowLabel}>{label}</Text>
+      </View>
       <Text style={styles.rowValue}>{value}</Text>
+    </View>
+  );
+}
+
+function EditField({ label, value, onChangeText, keyboardType, last }: { label: string; value: string; onChangeText: (t: string) => void; keyboardType?: any; last?: boolean }) {
+  return (
+    <View style={[styles.editField, !last && styles.editFieldBorder]}>
+      <Text style={styles.editLabel}>{label}</Text>
+      <TextInput
+        style={styles.editInput}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={label}
+        placeholderTextColor={Colors.onSurfaceVariant}
+        keyboardType={keyboardType}
+      />
     </View>
   );
 }
@@ -237,83 +251,131 @@ function ProfileRow({ label, value, last }: { label: string; value: string; last
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorWrap: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: Spacing.xl, gap: Spacing.md,
+  },
+  errorText: {
+    ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center',
+  },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+    ...Shadow.sm,
   },
-  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  backArrow: { fontSize: 24, color: Colors.black, fontWeight: '600' },
-  headerTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  content: { padding: Spacing.lg },
-  avatarWrap: {
-    alignSelf: 'center', marginBottom: Spacing.lg, position: 'relative',
-    width: 100, height: 100, borderRadius: 50,
-  },
-  avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: Colors.lightGray },
-  avatarPlaceholder: {
-    width: 100, height: 100, borderRadius: 50, backgroundColor: Colors.primary,
+  backBtn: {
+    width: 40, height: 40, borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surfaceContainerHigh,
     justifyContent: 'center', alignItems: 'center',
   },
-  avatarPlaceholderText: { fontSize: 36, fontWeight: '700', color: Colors.black },
+  headerTitle: { ...Typography.subheadSm, color: Colors.onSurface },
+  content: { padding: Spacing.md },
+  avatarWrap: {
+    alignSelf: 'center', marginBottom: Spacing.lg, position: 'relative',
+    width: 100, height: 100, borderRadius: BorderRadius.full,
+  },
+  avatar: { width: 100, height: 100, borderRadius: BorderRadius.full, backgroundColor: Colors.surfaceContainerHigh },
+  avatarPlaceholder: {
+    width: 100, height: 100, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryContainer,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  avatarPlaceholderText: {
+    ...Typography.headlineLg,
+    color: Colors.onPrimaryContainer,
+  },
   cameraBadge: {
     position: 'absolute', bottom: 0, right: 0,
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: Colors.black, justifyContent: 'center', alignItems: 'center',
+    width: 32, height: 32, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.inverseSurface,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: Colors.surfaceContainerLowest,
   },
-  cameraIcon: { fontSize: 14 },
-  sectionTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black, marginBottom: Spacing.sm, marginTop: Spacing.md },
+  sectionTitle: {
+    ...Typography.subheadSm,
+    color: Colors.onSurface,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.md,
+  },
   card: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
     overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
   },
   row: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: Spacing.md, paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1, borderBottomColor: Colors.lightGray,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
   },
   rowLast: { borderBottomWidth: 0 },
-  rowLabel: { fontSize: FontSize.body, color: Colors.mediumGray },
-  rowValue: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black, maxWidth: '60%', textAlign: 'right' },
-  field: { paddingHorizontal: Spacing.md, paddingTop: Spacing.md },
-  label: { fontSize: FontSize.caption, color: Colors.mediumGray, marginBottom: 4, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: {
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md, height: 44, fontSize: FontSize.body,
-    color: Colors.black,
+  rowLeft: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+  },
+  rowLabel: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
+  rowValue: {
+    ...Typography.bodySm, fontWeight: '600' as any,
+    color: Colors.onSurface, maxWidth: '60%', textAlign: 'right',
+  },
+  editField: {
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+  },
+  editFieldBorder: {
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+  },
+  editLabel: {
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
+    marginBottom: 4,
+    fontWeight: '600' as any,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  editInput: {
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.sm,
+    height: 44,
+    ...Typography.bodySm,
+    color: Colors.onSurface,
   },
   editActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
   cancelBtn: {
-    flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: Colors.border, alignItems: 'center',
+    flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.lg,
+    borderWidth: 1.5, borderColor: Colors.outlineVariant, alignItems: 'center',
   },
-  cancelText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.mediumGray },
+  cancelText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurfaceVariant },
   saveBtn: {
-    flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.md,
-    backgroundColor: Colors.black, alignItems: 'center',
+    flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primary, alignItems: 'center',
   },
-  saveText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.white },
-  editBtn: { marginTop: Spacing.md, alignItems: 'center', paddingVertical: Spacing.sm },
-  editBtnText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.primaryDark },
+  saveText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onPrimary },
+  editBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: Spacing.xs, marginTop: Spacing.md, paddingVertical: Spacing.sm,
+  },
+  editBtnText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.primary },
   prefRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: Spacing.md, paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1, borderBottomColor: Colors.lightGray,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
   },
   prefRowLast: { borderBottomWidth: 0 },
-  prefLabel: { fontSize: FontSize.body, fontWeight: '500', color: Colors.black },
+  prefLeft: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+  },
+  prefLabel: { ...Typography.bodySm, fontWeight: '500' as any, color: Colors.onSurface },
   langBtn: {
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md, paddingVertical: 6,
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs,
   },
-  langText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
+  langText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
   deleteBtn: {
-    marginTop: Spacing.xl, paddingVertical: Spacing.md,
-    alignItems: 'center', borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: '#FF3B30',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: Spacing.xs, marginTop: Spacing.xl, paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1.5, borderColor: Colors.errorContainer,
+    backgroundColor: Colors.errorContainer + '30',
   },
-  deleteText: { fontSize: FontSize.body, fontWeight: '600', color: '#FF3B30' },
+  deleteText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.error },
 });

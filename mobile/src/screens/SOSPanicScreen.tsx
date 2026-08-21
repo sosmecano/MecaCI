@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, MapPressEvent } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow, Glass } from '../constants/theme';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { api } from '../services/api';
@@ -22,9 +23,7 @@ export default function SOSPanicScreen({ navigation }: any) {
   const listeningRef = useRef(false);
 
   useEffect(() => {
-    return () => {
-      listeningRef.current = false;
-    };
+    return () => { listeningRef.current = false; };
   }, []);
 
   useEffect(() => {
@@ -120,12 +119,20 @@ export default function SOSPanicScreen({ navigation }: any) {
         setStep('accepted');
       });
     } catch (e: any) {
-      Alert.alert('Erreur', e.message || 'Impossible d\'envoyer le signal SOS');
+      Alert.alert('Erreur', e.message || "Impossible d'envoyer le signal SOS");
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>SOS Urgence</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <View style={styles.content}>
         {step === 'form' && (
           <View>
@@ -142,11 +149,12 @@ export default function SOSPanicScreen({ navigation }: any) {
                 onPress={onMapPress}
               >
                 {location && (
-                  <Marker coordinate={{ latitude: location.lat, longitude: location.lng }} title="Ma position" pinColor="#FF3B30" />
+                  <Marker coordinate={{ latitude: location.lat, longitude: location.lng }} title="Ma position" pinColor={Colors.error} />
                 )}
               </MapView>
-              <TouchableOpacity style={styles.locateBtn} onPress={locateMe}>
-                <Text style={styles.locateBtnText}>📍 Me localiser</Text>
+              <TouchableOpacity style={styles.locateBtn} onPress={locateMe} activeOpacity={0.7}>
+                <Ionicons name="locate" size={18} color={Colors.primary} />
+                <Text style={styles.locateBtnText}>Me localiser</Text>
               </TouchableOpacity>
             </View>
 
@@ -154,7 +162,7 @@ export default function SOSPanicScreen({ navigation }: any) {
             <TextInput
               style={styles.input}
               placeholder="Adresse ou lieu"
-              placeholderTextColor={Colors.mediumGray}
+              placeholderTextColor={Colors.onSurfaceVariant}
               value={addressText}
               onChangeText={searchAddress}
             />
@@ -168,14 +176,14 @@ export default function SOSPanicScreen({ navigation }: any) {
               </View>
             )}
 
-            <Button title="🚨 Envoyer SOS" onPress={sendSOS} disabled={!location} style={{ marginTop: Spacing.md }} />
+            <Button title="Envoyer SOS" onPress={sendSOS} variant="sos" disabled={!location} style={{ marginTop: Spacing.md }} />
           </View>
         )}
 
         {step === 'sending' && (
           <View style={styles.centerWrap}>
-            <View style={styles.pulseCircle}>
-              <Text style={styles.sosIcon}>🚨</Text>
+            <View style={[styles.pulseCircle, { backgroundColor: Colors.errorContainer }]}>
+              <Ionicons name="warning" size={40} color={Colors.error} />
             </View>
             <Text style={styles.title}>Envoi du signal SOS</Text>
             <Text style={styles.subtitle}>Recherche du professionnel le plus proche...</Text>
@@ -188,8 +196,8 @@ export default function SOSPanicScreen({ navigation }: any) {
 
         {step === 'waiting' && (
           <View style={styles.centerWrap}>
-            <View style={styles.pulseCircle}>
-              <Text style={styles.sosIcon}>🆘</Text>
+            <View style={[styles.pulseCircle, { backgroundColor: Colors.errorContainer }]}>
+              <Ionicons name="alert-circle" size={40} color={Colors.error} />
             </View>
             <Text style={styles.title}>Signal SOS envoyé</Text>
             <Text style={styles.subtitle}>En attente qu'un professionnel accepte...</Text>
@@ -202,20 +210,22 @@ export default function SOSPanicScreen({ navigation }: any) {
 
         {step === 'accepted' && (
           <View style={styles.centerWrap}>
-            <View style={styles.etaCircle}>
-              <Text style={styles.etaIcon}>🛵</Text>
+            <View style={[styles.etaCircle, { backgroundColor: Colors.primaryContainer + '30' }]}>
+              <Ionicons name="car" size={36} color={Colors.primary} />
             </View>
             <Text style={styles.title}>Professionnel en route</Text>
             <Card style={styles.trackingCard}>
               <View style={styles.trackingPro}>
-                <View style={[styles.proAvatar, { backgroundColor: Colors.primary }]}>
+                <View style={styles.proAvatar}>
                   <Text style={styles.proAvatarText}>
                     {((pro?.pro_first_name?.[0] || '') + (pro?.pro_last_name?.[0] || '')) || '?'}
                   </Text>
                 </View>
                 <View>
                   <Text style={styles.trackingName}>{pro?.pro_first_name || ''} {pro?.pro_last_name || ''}</Text>
-                  <Text style={styles.trackingRating}>⭐ {pro?.pro_rating?.toFixed(1) || '?'}</Text>
+                  <Text style={styles.trackingRating}>
+                    <Ionicons name="star" size={12} color={Colors.primaryContainer} /> {pro?.pro_rating?.toFixed(1) || '?'}
+                  </Text>
                 </View>
                 <Text style={styles.trackingEta}>en route</Text>
               </View>
@@ -224,7 +234,7 @@ export default function SOSPanicScreen({ navigation }: any) {
               </View>
             </Card>
             <View style={styles.actionRow}>
-              <Button title="📞 Appeler" onPress={() => {}} variant="secondary" style={{ flex: 1 }} />
+              <Button title="Appeler" onPress={() => {}} variant="secondary" style={{ flex: 1 }} />
               <Button title="Suivre" onPress={() => navigation.navigate('Tracking', { missionId })} variant="secondary" style={{ flex: 1 }} />
             </View>
           </View>
@@ -235,56 +245,67 @@ export default function SOSPanicScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.white },
-  content: { flex: 1, padding: Spacing.xl },
+  container: { flex: 1, backgroundColor: Colors.surface },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.safeMargin,
+    paddingVertical: Spacing.sm,
+  },
+  backBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.surfaceContainerHigh,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  headerTitle: { ...Typography.subheadSm, color: Colors.onSurface },
+  content: { flex: 1, padding: Spacing.safeMargin },
   centerWrap: { flex: 1, justifyContent: 'center' },
   pulseCircle: {
     width: 100, height: 100, borderRadius: 50,
-    backgroundColor: '#FFE8E5', justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     alignSelf: 'center', marginBottom: Spacing.lg,
   },
-  sosIcon: { fontSize: 44 },
-  title: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black, textAlign: 'center', marginBottom: Spacing.sm },
-  subtitle: { fontSize: FontSize.body, color: Colors.mediumGray, textAlign: 'center' },
-  searchingBar: { height: 4, backgroundColor: Colors.lightGray, borderRadius: 2, marginVertical: Spacing.lg, overflow: 'hidden' },
-  searchingProgress: { width: '40%', height: '100%', backgroundColor: Colors.primary, borderRadius: 2 },
+  title: { ...Typography.titleMd, color: Colors.onSurface, textAlign: 'center', marginBottom: Spacing.sm },
+  subtitle: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  searchingBar: { height: 4, backgroundColor: Colors.surfaceContainerHigh, borderRadius: 2, marginVertical: Spacing.lg, overflow: 'hidden' },
+  searchingProgress: { width: '40%', height: '100%', backgroundColor: Colors.primaryContainer, borderRadius: 2 },
   etaCircle: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#FFF5E0', justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     alignSelf: 'center', marginBottom: Spacing.lg,
   },
-  etaIcon: { fontSize: 36 },
   trackingCard: { marginBottom: Spacing.lg, padding: Spacing.lg },
   trackingPro: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  proAvatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
-  proAvatarText: { fontSize: 14, fontWeight: '700', color: Colors.black },
-  trackingName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  trackingRating: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  trackingEta: { fontSize: FontSize.subtitle, fontWeight: '800', color: Colors.black, marginLeft: 'auto' },
-  trackingBar: { height: 6, backgroundColor: Colors.lightGray, borderRadius: 3, overflow: 'hidden' },
-  trackingProgress: { width: '60%', height: '100%', backgroundColor: Colors.primary, borderRadius: 3 },
-  actionRow: { flexDirection: 'row', gap: Spacing.md },
-  mapWrap: { height: 200, borderRadius: BorderRadius.xl, overflow: 'hidden', marginBottom: Spacing.md },
+  proAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primaryContainer, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
+  proAvatarText: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  trackingName: { ...Typography.bodyBase, fontWeight: '700' as any, color: Colors.onSurface },
+  trackingRating: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  trackingEta: { ...Typography.subheadSm, color: Colors.onSurface, marginLeft: 'auto' },
+  trackingBar: { height: 6, backgroundColor: Colors.surfaceContainerHigh, borderRadius: 3, overflow: 'hidden' },
+  trackingProgress: { width: '60%', height: '100%', backgroundColor: Colors.primaryContainer, borderRadius: 3 },
+  actionRow: { flexDirection: 'row', gap: Spacing.sm },
+  mapWrap: { height: 200, borderRadius: BorderRadius.lg, overflow: 'hidden', marginBottom: Spacing.md },
   map: { flex: 1 },
   locateBtn: {
     position: 'absolute', bottom: Spacing.sm, right: Spacing.sm,
-    backgroundColor: Colors.white, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    backgroundColor: Glass.background, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md, flexDirection: 'row', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 4,
+    gap: Spacing.xs, ...Shadow.sm,
   },
-  locateBtnText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
-  label: { fontSize: FontSize.body, color: Colors.black, fontWeight: '600', marginBottom: Spacing.sm },
+  locateBtnText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
+  label: { ...Typography.bodyBase, color: Colors.onSurface, fontWeight: '600' as any, marginBottom: Spacing.sm },
   input: {
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.md,
-    padding: Spacing.md, fontSize: FontSize.body, color: Colors.black,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+    padding: Spacing.xs, ...Typography.bodyBase, color: Colors.onSurface, minHeight: 48,
   },
   suggestions: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
+    backgroundColor: Colors.surfaceContainerLowest, borderRadius: BorderRadius.md,
+    borderWidth: 1, borderColor: Colors.outlineVariant, marginBottom: Spacing.md,
   },
   suggestionItem: {
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
-    borderBottomWidth: 1, borderBottomColor: Colors.lightGray,
+    borderBottomWidth: 1, borderBottomColor: Colors.surfaceContainerHigh,
   },
-  suggestionText: { fontSize: FontSize.body, color: Colors.black },
+  suggestionText: { ...Typography.bodySm, color: Colors.onSurface },
 });

@@ -5,18 +5,18 @@ import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
 import { connectSocket, disconnectSocket } from '../services/socket';
 import { api } from '../services/api';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow, Glass } from '../constants/theme';
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'En attente', accepted: 'Acceptée', en_route: 'En route',
   arrived: 'Arrivé', in_progress: 'En cours', completed: 'Terminée', cancelled: 'Annulée',
 };
 const STATUS_COLORS: Record<string, string> = {
-  pending: '#FFA500', accepted: '#4A90D9', en_route: '#4A90D9',
-  arrived: '#34C759', in_progress: '#4A90D9', completed: '#34C759', cancelled: '#FF3B30',
+  pending: Colors.primaryContainer, accepted: Colors.secondary, en_route: Colors.secondary,
+  arrived: Colors.success, in_progress: Colors.secondary, completed: Colors.success, cancelled: Colors.error,
 };
 const TYPE_ICONS: Record<string, string> = {
-  emergency: '🚨', mechanic: '🔧', tow_truck: '🚛', garage: '🏪',
+  emergency: 'warning', mechanic: 'build', tow_truck: 'car', garage: 'business',
 };
 
 function formatDate(iso: string) {
@@ -46,10 +46,7 @@ export default function TrackingScreen({ navigation, route }: any) {
       mapRef.current?.fitToCoordinates([
         { latitude: mission.location_lat, longitude: mission.location_lng },
         { latitude: proLocation.lat, longitude: proLocation.lng },
-      ], {
-        edgePadding: { top: 40, right: 20, bottom: 50, left: 20 },
-        animated: true,
-      });
+      ], { edgePadding: { top: 40, right: 20, bottom: 50, left: 20 }, animated: true });
     } else {
       mapRef.current?.animateToRegion({
         latitude: proLocation.lat, longitude: proLocation.lng,
@@ -59,10 +56,7 @@ export default function TrackingScreen({ navigation, route }: any) {
   };
 
   const fetchHistory = useCallback(async () => {
-    try {
-      const missions = await api.users.missions();
-      setHistory(missions);
-    } catch {}
+    try { const missions = await api.users.missions(); setHistory(missions); } catch {}
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -91,10 +85,7 @@ export default function TrackingScreen({ navigation, route }: any) {
                   mapRef.current?.fitToCoordinates([
                     { latitude: mission.location_lat, longitude: mission.location_lng },
                     { latitude: data.lat, longitude: data.lng },
-                  ], {
-                    edgePadding: { top: 40, right: 20, bottom: 50, left: 20 },
-                    animated: true,
-                  });
+                  ], { edgePadding: { top: 40, right: 20, bottom: 50, left: 20 }, animated: true });
                 } else {
                   mapRef.current?.animateToRegion({
                     latitude: data.lat, longitude: data.lng,
@@ -104,10 +95,7 @@ export default function TrackingScreen({ navigation, route }: any) {
               }
             });
             socket.on('mission:status', (data: any) => { setActiveMission((prev: any) => prev ? { ...prev, ...data } : data); });
-            socket.on('arrival:detected', () => {
-              setArrivalNotified(true);
-              Vibration.vibrate(500);
-            });
+            socket.on('arrival:detected', () => { setArrivalNotified(true); Vibration.vibrate(500); });
           }
         } catch {}
         setLoading(false);
@@ -116,9 +104,7 @@ export default function TrackingScreen({ navigation, route }: any) {
 
       try {
         const missions = await api.users.missions();
-        const active = missions.find((m: any) =>
-          ['accepted', 'en_route', 'arrived', 'in_progress'].includes(m.status)
-        );
+        const active = missions.find((m: any) => ['accepted', 'en_route', 'arrived', 'in_progress'].includes(m.status));
         if (active) {
           setActiveMission(active);
           if (socket) {
@@ -128,10 +114,7 @@ export default function TrackingScreen({ navigation, route }: any) {
               if (followRef.current) recenterPro();
             });
             socket.on('mission:status', (data: any) => { setActiveMission((prev: any) => prev ? { ...prev, ...data } : data); });
-            socket.on('arrival:detected', () => {
-              setArrivalNotified(true);
-              Vibration.vibrate(500);
-            });
+            socket.on('arrival:detected', () => { setArrivalNotified(true); Vibration.vibrate(500); });
           }
         } else {
           setHistory(missions);
@@ -145,9 +128,7 @@ export default function TrackingScreen({ navigation, route }: any) {
   }, []);
 
   if (activeMission?.id) {
-    const proName = activeMission?.pro_first_name
-      ? `${activeMission.pro_first_name} ${activeMission.pro_last_name}`
-      : activeMission?.pro_first_name || 'Professionnel';
+    const proName = activeMission?.pro_first_name ? `${activeMission.pro_first_name} ${activeMission.pro_last_name}` : 'Professionnel';
     const proRating = activeMission?.pro_rating ? activeMission.pro_rating.toFixed(1) : '?';
     const proType = activeMission?.service_type || 'Mécanicien';
     const hasDeparture = activeMission?.location_lat && activeMission?.location_lng;
@@ -165,26 +146,17 @@ export default function TrackingScreen({ navigation, route }: any) {
           }}
           showsUserLocation
           showsMyLocationButton={false}
-          onPanDrag={() => {
-            setFollowMode(false);
-            followRef.current = false;
-          }}
+          onPanDrag={() => { setFollowMode(false); followRef.current = false; }}
         >
-          {hasDeparture && (
-            <Marker coordinate={{ latitude: activeMission.location_lat, longitude: activeMission.location_lng }} title="Départ" pinColor="#4A90D9" />
-          )}
-          {hasDestinationCoords && (
-            <Marker coordinate={{ latitude: activeMission.destination_lat, longitude: activeMission.destination_lng }} title="Destination" pinColor="#FF3B30" />
-          )}
-          {proLocation && (
-            <Marker coordinate={{ latitude: proLocation.lat, longitude: proLocation.lng }} title={proName} pinColor={Colors.primary} />
-          )}
+          {hasDeparture && <Marker coordinate={{ latitude: activeMission.location_lat, longitude: activeMission.location_lng }} title="Départ" pinColor={Colors.secondary} />}
+          {hasDestinationCoords && <Marker coordinate={{ latitude: activeMission.destination_lat, longitude: activeMission.destination_lng }} title="Destination" pinColor={Colors.error} />}
+          {proLocation && <Marker coordinate={{ latitude: proLocation.lat, longitude: proLocation.lng }} title={proName} pinColor={Colors.primary} />}
         </MapView>
 
         <SafeAreaView style={styles.overlay} pointerEvents="box-none">
           <View style={styles.topRow}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={24} color={Colors.black} />
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+              <Ionicons name="arrow-back" size={22} color={Colors.onSurface} />
             </TouchableOpacity>
             <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
               <TouchableOpacity style={[styles.iconBtn, followMode && styles.iconBtnActive]} onPress={() => {
@@ -192,18 +164,18 @@ export default function TrackingScreen({ navigation, route }: any) {
                 setFollowMode(next);
                 followRef.current = next;
                 if (next) recenterPro();
-              }}>
-                <Ionicons name="locate" size={22} color={followMode ? Colors.primary : Colors.black} />
+              }} activeOpacity={0.7}>
+                <Ionicons name="locate" size={22} color={followMode ? Colors.primary : Colors.onSurface} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.iconBtn} onPress={() => setShowInfo(!showInfo)}>
-                <Ionicons name={showInfo ? 'information-circle' : 'information-circle-outline'} size={22} color={Colors.black} />
+              <TouchableOpacity style={styles.iconBtn} onPress={() => setShowInfo(!showInfo)} activeOpacity={0.7}>
+                <Ionicons name={showInfo ? 'information-circle' : 'information-circle-outline'} size={22} color={Colors.onSurface} />
               </TouchableOpacity>
             </View>
           </View>
 
           {(activeMission?.status === 'arrived' || arrivalNotified) && (
             <View style={styles.arrivalBanner}>
-              <Ionicons name="checkmark-circle" size={22} color="#fff" />
+              <Ionicons name="checkmark-circle" size={22} color={Colors.white} />
               <Text style={styles.arrivalBannerText}>Le professionnel est arrivé !</Text>
             </View>
           )}
@@ -211,12 +183,14 @@ export default function TrackingScreen({ navigation, route }: any) {
           {showInfo && (
             <View style={styles.infoCard}>
               <View style={styles.proRow}>
-                <View style={[styles.proAvatar, { backgroundColor: Colors.primary }]}>
+                <View style={styles.proAvatar}>
                   <Text style={styles.proAvatarText}>{proName.split(' ').map((n: string) => n[0]).join('') || '?'}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.proName}>{proName}</Text>
-                  <Text style={styles.proSub}>⭐ {proRating} · {proType}</Text>
+                  <Text style={styles.proSub}>
+                    <Ionicons name="star" size={12} color={Colors.primaryContainer} /> {proRating} · {proType}
+                  </Text>
                 </View>
                 <Text style={styles.eta}>{activeMission?.eta || '8 min'}</Text>
               </View>
@@ -224,22 +198,24 @@ export default function TrackingScreen({ navigation, route }: any) {
                 <View style={[styles.trackingProgress, { width: activeMission?.progress || '60%' }]} />
               </View>
               {activeMission?.destination_address && (
-                <Text style={styles.destinationText}>🏁 {activeMission.destination_address}</Text>
+                <Text style={styles.destinationText}>
+                  <Ionicons name="flag" size={12} color={Colors.onSurfaceVariant} /> {activeMission.destination_address}
+                </Text>
               )}
             </View>
           )}
 
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => { if (activeMission?.pro_phone) Linking.openURL(`tel:${activeMission.pro_phone}`).catch(() => {}); }}>
-              <Ionicons name="call" size={20} color="#fff" />
+            <TouchableOpacity style={styles.actionBtn} onPress={() => { if (activeMission?.pro_phone) Linking.openURL(`tel:${activeMission.pro_phone}`).catch(() => {}); }} activeOpacity={0.7}>
+              <Ionicons name="call" size={18} color={Colors.white} />
               <Text style={styles.actionBtnText}>Appeler</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => {}}>
-              <Ionicons name="chatbubble" size={20} color="#fff" />
+            <TouchableOpacity style={styles.actionBtn} onPress={() => {}} activeOpacity={0.7}>
+              <Ionicons name="chatbubble" size={18} color={Colors.white} />
               <Text style={styles.actionBtnText}>Message</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: Colors.sos }]}>
-              <Ionicons name="alert-circle" size={20} color="#fff" />
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: Colors.error }]} activeOpacity={0.7}>
+              <Ionicons name="alert-circle" size={18} color={Colors.white} />
               <Text style={styles.actionBtnText}>SOS</Text>
             </TouchableOpacity>
           </View>
@@ -258,7 +234,9 @@ export default function TrackingScreen({ navigation, route }: any) {
         <View style={styles.center}><ActivityIndicator size="large" color={Colors.primary} /></View>
       ) : history.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyIcon}>📋</Text>
+          <View style={styles.emptyIconWrap}>
+            <Ionicons name="document-text-outline" size={48} color={Colors.outlineVariant} />
+          </View>
           <Text style={styles.emptyTitle}>Aucune mission</Text>
           <Text style={styles.emptySub}>Vous n'avez pas encore de mission{'\n'}Utilisez l'accueil pour en créer une</Text>
         </View>
@@ -279,7 +257,7 @@ export default function TrackingScreen({ navigation, route }: any) {
               activeOpacity={m.status === 'completed' || m.status === 'cancelled' ? 1 : 0.7}
             >
               <View style={styles.missionLeft}>
-                <Text style={styles.missionIcon}>{TYPE_ICONS[m.service_type] || '🔧'}</Text>
+                <Ionicons name={(TYPE_ICONS[m.service_type] || 'build') as any} size={22} color={Colors.primary} />
               </View>
               <View style={styles.missionInfo}>
                 <Text style={styles.missionType}>
@@ -293,8 +271,8 @@ export default function TrackingScreen({ navigation, route }: any) {
                 )}
                 <Text style={styles.missionDate}>{formatDate(m.created_at)}</Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[m.status] || Colors.mediumGray) + '20' }]}>
-                <Text style={[styles.statusText, { color: STATUS_COLORS[m.status] || Colors.mediumGray }]}>
+              <View style={[styles.statusBadge, { backgroundColor: (STATUS_COLORS[m.status] || Colors.outline) + '25' }]}>
+                <Text style={[styles.statusText, { color: STATUS_COLORS[m.status] || Colors.outline }]}>
                   {STATUS_LABELS[m.status] || m.status}
                 </Text>
               </View>
@@ -308,79 +286,77 @@ export default function TrackingScreen({ navigation, route }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  overlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-  },
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   topRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: Spacing.md, paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.safeMargin, paddingTop: Spacing.sm,
   },
   iconBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: Glass.background,
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15, shadowRadius: 8, elevation: 4,
+    ...Shadow.sm,
   },
-  iconBtnActive: {
-    borderWidth: 2, borderColor: Colors.primary,
-  },
+  iconBtnActive: { borderWidth: 2, borderColor: Colors.primary },
   infoCard: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    marginHorizontal: Spacing.md, marginTop: Spacing.sm,
-    borderRadius: BorderRadius.xl, padding: Spacing.lg,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1, shadowRadius: 12, elevation: 5,
+    backgroundColor: Glass.background,
+    marginHorizontal: Spacing.safeMargin, marginTop: Spacing.sm,
+    borderRadius: BorderRadius.lg, padding: Spacing.lg,
+    ...Shadow.md,
   },
   proRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  proAvatar: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
-  proAvatarText: { fontSize: 16, fontWeight: '700', color: Colors.black },
-  proName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  proSub: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  eta: { fontSize: FontSize.subtitle, fontWeight: '800', color: Colors.black },
-  trackingBar: { height: 6, backgroundColor: Colors.lightGray, borderRadius: 3, overflow: 'hidden' },
-  trackingProgress: { height: '100%', backgroundColor: Colors.primary, borderRadius: 3 },
-  destinationText: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: Spacing.sm },
+  proAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primaryContainer, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
+  proAvatarText: { ...Typography.bodyBase, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  proName: { ...Typography.bodyBase, fontWeight: '700' as any, color: Colors.onSurface },
+  proSub: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  eta: { ...Typography.titleMd, color: Colors.onSurface },
+  trackingBar: { height: 6, backgroundColor: Colors.surfaceContainerHigh, borderRadius: 3, overflow: 'hidden' },
+  trackingProgress: { height: '100%', backgroundColor: Colors.primaryContainer, borderRadius: 3 },
+  destinationText: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: Spacing.sm },
   actionRow: {
-    position: 'absolute', bottom: 40, left: Spacing.md, right: Spacing.md,
+    position: 'absolute', bottom: 40, left: Spacing.safeMargin, right: Spacing.safeMargin,
     flexDirection: 'row', gap: Spacing.sm,
   },
   actionBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: Colors.inverseSurface,
     paddingVertical: 14, borderRadius: BorderRadius.xl,
   },
-  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: FontSize.body },
-  historyContainer: { flex: 1, backgroundColor: '#F5F5F5' },
-  header: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm, backgroundColor: Colors.white },
-  headerTitle: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black },
-  headerSub: { fontSize: FontSize.body, color: Colors.mediumGray, marginTop: 2 },
+  actionBtnText: { color: Colors.white, fontWeight: '700' as any, ...Typography.bodySm },
+  historyContainer: { flex: 1, backgroundColor: Colors.surface },
+  header: { paddingHorizontal: Spacing.safeMargin, paddingTop: Spacing.md, paddingBottom: Spacing.sm },
+  headerTitle: { ...Typography.headlineLg, color: Colors.onSurface },
+  headerSub: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, marginTop: 2 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
-  emptyIcon: { fontSize: 60, marginBottom: Spacing.lg },
-  emptyTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black, marginBottom: Spacing.sm },
-  emptySub: { fontSize: FontSize.body, color: Colors.mediumGray, textAlign: 'center', lineHeight: 22 },
-  list: { padding: Spacing.lg, paddingTop: Spacing.sm, paddingBottom: Spacing.xxl },
+  emptyIconWrap: {
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: Colors.surfaceContainerHigh,
+    justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.lg,
+  },
+  emptyTitle: { ...Typography.subheadSm, color: Colors.onSurface, marginBottom: Spacing.sm, textAlign: 'center' },
+  emptySub: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 22 },
+  list: { padding: Spacing.safeMargin, paddingTop: Spacing.sm, paddingBottom: 100 },
   missionCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
-    padding: Spacing.md, marginBottom: Spacing.md,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    backgroundColor: Colors.surfaceContainerLowest, borderRadius: BorderRadius.lg,
+    padding: Spacing.md, marginBottom: Spacing.sm,
+    borderWidth: 1, borderColor: Colors.outlineVariant,
+    ...Shadow.sm,
   },
   missionLeft: {
-    width: 44, height: 44, borderRadius: 12, backgroundColor: '#FFF5E0',
+    width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.primaryContainer + '20',
     justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
   },
-  missionIcon: { fontSize: 22 },
   missionInfo: { flex: 1 },
-  missionType: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  missionPro: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  missionDate: { fontSize: FontSize.caption, color: Colors.textSecondary, marginTop: 1 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  statusText: { fontSize: FontSize.caption, fontWeight: '700' },
+  missionType: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onSurface },
+  missionPro: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  missionDate: { ...Typography.caption, color: Colors.outline, marginTop: 1 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: BorderRadius.sm },
+  statusText: { ...Typography.caption, fontWeight: '700' as any },
   arrivalBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#34C759', paddingVertical: 10, paddingHorizontal: 16,
-    marginHorizontal: Spacing.md, marginTop: Spacing.sm, borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.success, paddingVertical: 10, paddingHorizontal: 16,
+    marginHorizontal: Spacing.safeMargin, marginTop: Spacing.sm, borderRadius: BorderRadius.md,
   },
-  arrivalBannerText: { color: '#fff', fontWeight: '700', fontSize: FontSize.body },
+  arrivalBannerText: { color: Colors.white, fontWeight: '700' as any, ...Typography.bodySm },
 });

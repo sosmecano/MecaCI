@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Switch, Alert, ActivityIndicator, TextInput } from 'react-native';
-import Button from '../components/Button';
+import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import { useFocusEffect } from '@react-navigation/native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
+import Button from '../components/Button';
 import Card from '../components/Card';
 import { api } from '../services/api';
 import MapView, { Marker, Circle } from 'react-native-maps';
@@ -31,10 +32,8 @@ export default function ProProfileScreen({ navigation }: any) {
       const { latitude, longitude } = loc.coords;
       setForm({ ...form, zone_center_lat: latitude, zone_center_lng: longitude });
       mapRef.current?.animateToRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
+        latitude, longitude,
+        latitudeDelta: 0.02, longitudeDelta: 0.02,
       }, 500);
     } catch (e: any) {
       Alert.alert('Erreur', 'Impossible de vous localiser: ' + e.message);
@@ -125,8 +124,9 @@ export default function ProProfileScreen({ navigation }: any) {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.lg }}>
-          <Text style={{ color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.md }}>{error}</Text>
+        <View style={styles.errorWrap}>
+          <Ionicons name="cloud-offline-outline" size={48} color={Colors.onSurfaceVariant} />
+          <Text style={styles.errorText}>{error}</Text>
           <Button title="Réessayer" onPress={loadProfile} variant="outline" />
         </View>
       </SafeAreaView>
@@ -138,7 +138,7 @@ export default function ProProfileScreen({ navigation }: any) {
     : '??';
 
   const typeLabel: Record<string, string> = {
-    mechanic: 'Mcanicien',
+    mechanic: 'Mécanicien',
     tow_truck: 'Remorqueur',
     garage: 'Garage',
   };
@@ -156,7 +156,7 @@ export default function ProProfileScreen({ navigation }: any) {
               value={form.business_name}
               onChangeText={(t) => setForm({ ...form, business_name: t })}
               placeholder="Nom de l'entreprise"
-              placeholderTextColor={Colors.mediumGray}
+              placeholderTextColor={Colors.onSurfaceVariant}
             />
           ) : (
             <Text style={styles.businessName}>{pro?.business_name || `${pro?.first_name || ''} ${pro?.last_name || ''}`.trim()}</Text>
@@ -165,60 +165,65 @@ export default function ProProfileScreen({ navigation }: any) {
           <Text style={styles.phone}>{pro?.phone || ''}</Text>
 
           <View style={styles.availRow}>
-            <View style={[styles.availDot, { backgroundColor: available ? Colors.success : '#ccc' }]} />
-            <Text style={[styles.availLabel, { color: available ? Colors.success : Colors.mediumGray }]}>
+            <View style={[styles.availDot, { backgroundColor: available ? Colors.success : Colors.outlineVariant }]} />
+            <Text style={[styles.availLabel, { color: available ? Colors.success : Colors.onSurfaceVariant }]}>
               {available ? 'Disponible' : 'Indisponible'}
             </Text>
             <Switch
               value={available}
               onValueChange={toggleAvailability}
-              trackColor={{ false: Colors.lightGray, true: Colors.primary }}
-              thumbColor={Colors.white}
+              trackColor={{ false: Colors.outlineVariant, true: Colors.primaryContainer }}
+              thumbColor={available ? Colors.primary : Colors.outline}
             />
           </View>
         </View>
 
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
+          <Card style={styles.statCard}>
+            <Ionicons name="star" size={20} color={Colors.primaryContainer} />
             <Text style={styles.statNum}>{pro?.rating?.toFixed(1) || '—'}</Text>
             <Text style={styles.statLabel}>Note</Text>
-          </View>
-          <View style={styles.statCard}>
+          </Card>
+          <Card style={styles.statCard}>
+            <Ionicons name="chatbubble-outline" size={20} color={Colors.secondary} />
             <Text style={styles.statNum}>{pro?.rating_count || 0}</Text>
             <Text style={styles.statLabel}>Avis</Text>
-          </View>
-          <View style={styles.statCard}>
-            <View style={[styles.statusBadge, { backgroundColor: pro?.status === 'active' ? '#E8F8E8' : '#FFF3E0' }]}>
-              <Text style={[styles.statusText, { color: pro?.status === 'active' ? Colors.success : '#FF9800' }]}>
+          </Card>
+          <Card style={styles.statCard}>
+            <View style={[styles.statusBadge, { backgroundColor: pro?.status === 'active' ? Colors.success + '20' : Colors.primaryContainer + '40' }]}>
+              <Text style={[styles.statusText, { color: pro?.status === 'active' ? Colors.success : Colors.primary }]}>
                 {pro?.status === 'active' ? 'Actif' : pro?.status === 'pending' ? 'En attente' : pro?.status}
               </Text>
             </View>
             <Text style={styles.statLabel}>Statut</Text>
-          </View>
+          </Card>
         </View>
 
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>Informations</Text>
           <TouchableOpacity onPress={() => editing ? saveProfile() : setEditing(true)} disabled={saving}>
-            <Text style={[styles.editBtn, saving && { opacity: 0.5 }]}>
-              {saving ? 'Enregistrement...' : editing ? 'Enregistrer' : 'Modifier'}
-            </Text>
+            <View style={styles.editBtnWrap}>
+              <Ionicons name={editing ? "checkmark" : "create-outline"} size={16} color={Colors.primary} />
+              <Text style={[styles.editBtn, saving && { opacity: 0.5 }]}>
+                {saving ? 'Enregistrement...' : editing ? 'Enregistrer' : 'Modifier'}
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
         <Card style={styles.infoCard}>
           {editing ? (
             <>
-              <EditRow label="Prnom" value={form.first_name} onChange={(t) => setForm({ ...form, first_name: t })} />
+              <EditRow label="Prénom" value={form.first_name} onChange={(t) => setForm({ ...form, first_name: t })} />
               <EditRow label="Nom" value={form.last_name} onChange={(t) => setForm({ ...form, last_name: t })} />
               <EditRow label="Ville" value={form.city} onChange={(t) => setForm({ ...form, city: t })} />
-              <EditRow label="Spcialits" value={form.specialties} onChange={(t) => setForm({ ...form, specialties: t })} placeholder="mcanique, batterie, freins" last />
+              <EditRow label="Spécialités" value={form.specialties} onChange={(t) => setForm({ ...form, specialties: t })} placeholder="mécanique, batterie, freins" last />
             </>
           ) : (
             <>
-              <InfoRow label="Prnom" value={pro?.first_name || '—'} />
-              <InfoRow label="Nom" value={pro?.last_name || '—'} />
-              <InfoRow label="Ville" value={pro?.city || '—'} />
-              <InfoRow label="Spcialits" value={Array.isArray(pro?.specialties) ? pro.specialties.join(', ') : String(pro?.specialties || '—')} last />
+              <InfoRow icon="person-outline" label="Prénom" value={pro?.first_name || '—'} />
+              <InfoRow icon="person-outline" label="Nom" value={pro?.last_name || '—'} />
+              <InfoRow icon="location-outline" label="Ville" value={pro?.city || '—'} />
+              <InfoRow icon="star-outline" label="Spécialités" value={Array.isArray(pro?.specialties) ? pro.specialties.join(', ') : String(pro?.specialties || '—')} last />
             </>
           )}
         </Card>
@@ -249,12 +254,13 @@ export default function ProProfileScreen({ navigation }: any) {
                   <Circle
                     center={{ latitude: form.zone_center_lat, longitude: form.zone_center_lng }}
                     radius={form.zone_radius_km * 1000}
-                    fillColor="rgba(0, 122, 255, 0.1)"
-                    strokeColor="rgba(0, 122, 255, 0.4)"
+                    fillColor={Colors.secondary + '15'}
+                    strokeColor={Colors.secondary + '40'}
                     strokeWidth={2}
                   />
                 </MapView>
                 <TouchableOpacity style={styles.locateBtn} onPress={locateMe}>
+                  <Ionicons name="locate" size={16} color={Colors.primary} />
                   <Text style={styles.locateBtnText}>Me localiser</Text>
                 </TouchableOpacity>
               </View>
@@ -272,14 +278,14 @@ export default function ProProfileScreen({ navigation }: any) {
                   </TouchableOpacity>
                 ))}
               </View>
-              <InfoRow label="Latitude" value={form.zone_center_lat.toFixed(4)} />
-              <InfoRow label="Longitude" value={form.zone_center_lng.toFixed(4)} last />
+              <InfoRow icon="location-outline" label="Latitude" value={form.zone_center_lat.toFixed(4)} />
+              <InfoRow icon="location-outline" label="Longitude" value={form.zone_center_lng.toFixed(4)} last />
             </>
           ) : (
             <>
-              <InfoRow label="Latitude" value={typeof pro?.zone_center_lat === 'number' ? pro.zone_center_lat.toFixed(4) : String(pro?.zone_center_lat || '—')} />
-              <InfoRow label="Longitude" value={typeof pro?.zone_center_lng === 'number' ? pro.zone_center_lng.toFixed(4) : String(pro?.zone_center_lng || '—')} />
-              <InfoRow label="Rayon" value={pro?.zone_radius_km ? `${pro.zone_radius_km} km` : '—'} last />
+              <InfoRow icon="location-outline" label="Latitude" value={typeof pro?.zone_center_lat === 'number' ? pro.zone_center_lat.toFixed(4) : String(pro?.zone_center_lat || '—')} />
+              <InfoRow icon="location-outline" label="Longitude" value={typeof pro?.zone_center_lng === 'number' ? pro.zone_center_lng.toFixed(4) : String(pro?.zone_center_lng || '—')} />
+              <InfoRow icon="resize-outline" label="Rayon" value={pro?.zone_radius_km ? `${pro.zone_radius_km} km` : '—'} last />
             </>
           )}
         </Card>
@@ -296,7 +302,8 @@ export default function ProProfileScreen({ navigation }: any) {
         )}
 
         <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-          <Text style={styles.logoutText}>Se dconnecter</Text>
+          <Ionicons name="log-out-outline" size={18} color={Colors.error} />
+          <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -305,10 +312,13 @@ export default function ProProfileScreen({ navigation }: any) {
   );
 }
 
-function InfoRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
+function InfoRow({ icon, label, value, last }: { icon: string; label: string; value: string; last?: boolean }) {
   return (
     <View style={[styles.row, last && styles.rowLast]}>
-      <Text style={styles.rowLabel}>{label}</Text>
+      <View style={styles.rowLeft}>
+        <Ionicons name={icon as any} size={16} color={Colors.onSurfaceVariant} />
+        <Text style={styles.rowLabel}>{label}</Text>
+      </View>
       <Text style={styles.rowValue}>{value}</Text>
     </View>
   );
@@ -323,7 +333,7 @@ function EditRow({ label, value, onChange, placeholder, last }: { label: string;
         value={value}
         onChangeText={onChange}
         placeholder={placeholder || label}
-        placeholderTextColor={Colors.mediumGray}
+        placeholderTextColor={Colors.onSurfaceVariant}
       />
     </View>
   );
@@ -332,53 +342,55 @@ function EditRow({ label, value, onChange, placeholder, last }: { label: string;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { padding: Spacing.lg },
+  errorWrap: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: Spacing.xl, gap: Spacing.md,
+  },
+  errorText: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  content: { padding: Spacing.md },
   profileHeader: { alignItems: 'center', marginBottom: Spacing.xl, paddingVertical: Spacing.lg },
   avatar: {
-    width: 88, height: 88, borderRadius: 44, backgroundColor: Colors.primary,
+    width: 88, height: 88, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryContainer,
     justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.md,
   },
-  avatarText: { fontSize: 32, fontWeight: '700', color: Colors.black },
-  businessName: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black, textAlign: 'center' },
-  type: { fontSize: FontSize.body, color: Colors.mediumGray, marginTop: 2 },
-  phone: { fontSize: FontSize.body, color: Colors.mediumGray, marginTop: 1 },
-  availRow: { flexDirection: 'row', alignItems: 'center', marginTop: Spacing.md, gap: Spacing.sm },
+  avatarText: { ...Typography.headlineLg, color: Colors.onPrimaryContainer },
+  businessName: { ...Typography.subheadSm, color: Colors.onSurface, textAlign: 'center' },
+  type: { ...Typography.bodySm, color: Colors.onSurfaceVariant, marginTop: 2 },
+  phone: { ...Typography.bodySm, color: Colors.onSurfaceVariant, marginTop: 1 },
+  availRow: { flexDirection: 'row', alignItems: 'center', marginTop: Spacing.md, gap: Spacing.xs },
   availDot: { width: 10, height: 10, borderRadius: 5 },
-  availLabel: { fontSize: FontSize.body, fontWeight: '600' },
+  availLabel: { ...Typography.bodySm, fontWeight: '600' as any },
   statsRow: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.lg },
-  statCard: {
-    flex: 1, backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
-    padding: Spacing.md, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+  statCard: { flex: 1, alignItems: 'center', padding: Spacing.md, gap: Spacing.xs },
+  statNum: { ...Typography.subheadSm, fontWeight: '800' as any, color: Colors.onSurface },
+  statLabel: { ...Typography.caption, color: Colors.onSurfaceVariant },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: BorderRadius.md },
+  statusText: { ...Typography.caption, fontWeight: '700' as any },
+  sectionRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: Spacing.sm, marginTop: Spacing.sm,
   },
-  statNum: { fontSize: FontSize.subtitle, fontWeight: '800', color: Colors.black, marginBottom: 2 },
-  statLabel: { fontSize: FontSize.caption, color: Colors.mediumGray },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginBottom: 2 },
-  statusText: { fontSize: FontSize.caption, fontWeight: '700' },
-  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm, marginTop: Spacing.sm },
-  sectionTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  editBtn: { fontSize: FontSize.body, fontWeight: '600', color: Colors.primary },
-  infoCard: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
-  },
+  sectionTitle: { ...Typography.subheadSm, color: Colors.onSurface },
+  editBtnWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  editBtn: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.primary },
+  infoCard: { overflow: 'hidden' },
   row: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: Spacing.md, paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1, borderBottomColor: Colors.lightGray,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
   },
   rowLast: { borderBottomWidth: 0 },
-  rowLabel: { fontSize: FontSize.body, color: Colors.mediumGray },
-  rowValue: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black, maxWidth: '55%', textAlign: 'right' },
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  rowLabel: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
+  rowValue: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface, maxWidth: '55%', textAlign: 'right' },
   editInput: {
-    fontSize: FontSize.body, fontWeight: '600', color: Colors.black,
+    ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface,
     maxWidth: '55%', textAlign: 'right', paddingVertical: 0,
     borderBottomWidth: 1, borderBottomColor: Colors.primary,
   },
   editInputName: {
-    fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black,
+    ...Typography.subheadSm, color: Colors.onSurface,
     textAlign: 'center', borderBottomWidth: 1, borderBottomColor: Colors.primary,
     paddingVertical: 2, minWidth: 200,
   },
@@ -386,37 +398,38 @@ const styles = StyleSheet.create({
   map: { flex: 1 },
   locateBtn: {
     position: 'absolute', bottom: 8, right: 8,
-    backgroundColor: Colors.white, paddingVertical: 6, paddingHorizontal: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: Colors.surfaceContainerLowest, paddingVertical: 6, paddingHorizontal: 12,
     borderRadius: BorderRadius.md,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15, shadowRadius: 4, elevation: 4,
+    ...Shadow.md,
   },
-  locateBtnText: { fontSize: FontSize.caption, fontWeight: '600', color: Colors.primary },
+  locateBtnText: { ...Typography.caption, fontWeight: '600' as any, color: Colors.primary },
   radiusRow: { paddingHorizontal: Spacing.md, marginBottom: Spacing.sm },
-  radiusLabel: { fontSize: FontSize.body, fontWeight: '600', color: Colors.black },
+  radiusLabel: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
   radiusInputs: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, paddingHorizontal: Spacing.md, marginBottom: Spacing.md },
   radiusOption: {
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.lightGray,
+    borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.outlineVariant,
   },
   radiusOptionActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  radiusOptionText: { fontSize: FontSize.caption, color: Colors.mediumGray },
-  radiusOptionTextActive: { color: Colors.white, fontWeight: '600' },
-  editActions: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg },
+  radiusOptionText: { ...Typography.caption, color: Colors.onSurfaceVariant },
+  radiusOptionTextActive: { color: Colors.onPrimary, fontWeight: '600' as any },
+  editActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.lg },
   cancelBtn: {
     flex: 1, paddingVertical: Spacing.md, alignItems: 'center',
-    borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.lightGray,
+    borderRadius: BorderRadius.lg, borderWidth: 1.5, borderColor: Colors.outlineVariant,
   },
-  cancelText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.mediumGray },
+  cancelText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurfaceVariant },
   saveBtn: {
     flex: 1, paddingVertical: Spacing.md, alignItems: 'center',
-    borderRadius: BorderRadius.md, backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg, backgroundColor: Colors.primary,
   },
-  saveText: { fontSize: FontSize.body, fontWeight: '600', color: Colors.white },
+  saveText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onPrimary },
   logoutBtn: {
-    marginTop: Spacing.xl, paddingVertical: Spacing.md,
-    alignItems: 'center', borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: '#FF3B30',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: Spacing.xs, marginTop: Spacing.xl, paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg, borderWidth: 1.5, borderColor: Colors.errorContainer,
+    backgroundColor: Colors.errorContainer + '30',
   },
-  logoutText: { fontSize: FontSize.body, fontWeight: '600', color: '#FF3B30' },
+  logoutText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.error },
 });

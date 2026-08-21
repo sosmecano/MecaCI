@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
-import Button from '../components/Button';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Card from '../components/Card';
 import { api } from '../services/api';
 
@@ -52,12 +52,15 @@ export default function AdminUsersScreen() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color={Colors.primary} /></View>
       ) : error ? (
-        <View style={{ alignItems: 'center', marginTop: Spacing.xl, paddingHorizontal: Spacing.lg }}>
-          <Text style={{ color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.md }}>{error}</Text>
-          <Button title="Réessayer" onPress={loadUsers} variant="outline" />
+        <View style={styles.errorWrap}>
+          <Ionicons name="cloud-offline-outline" size={48} color={Colors.onSurfaceVariant} />
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : users.length === 0 ? (
-        <View style={styles.center}><Text style={styles.empty}>Aucun utilisateur</Text></View>
+        <View style={styles.center}>
+          <Ionicons name="people-outline" size={48} color={Colors.outlineVariant} />
+          <Text style={styles.empty}>Aucun utilisateur</Text>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           {users.map((u: any, i: number) => (
@@ -70,22 +73,40 @@ export default function AdminUsersScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.userName}>{[u.first_name, u.last_name].filter(Boolean).join(' ') || '—'}</Text>
-                  <Text style={styles.userDetail}>{u.phone || ''}</Text>
-                  <Text style={styles.userDetail}>{u.email || ''}</Text>
-                  <Text style={styles.userDetail}>{u.city || ''}</Text>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="call-outline" size={14} color={Colors.onSurfaceVariant} />
+                    <Text style={styles.userDetail}>{u.phone || ''}</Text>
+                  </View>
+                  {u.email && (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="mail-outline" size={14} color={Colors.onSurfaceVariant} />
+                      <Text style={styles.userDetail}>{u.email}</Text>
+                    </View>
+                  )}
+                  {u.city && (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="location-outline" size={14} color={Colors.onSurfaceVariant} />
+                      <Text style={styles.userDetail}>{u.city}</Text>
+                    </View>
+                  )}
                 </View>
                 <View style={styles.userActions}>
                   {u.is_suspended ? (
-                    <Text style={styles.suspendedLabel}>Suspendu</Text>
+                    <View style={styles.suspendedBadge}>
+                      <Text style={styles.suspendedLabel}>Suspendu</Text>
+                    </View>
                   ) : (
-                    <TouchableOpacity onPress={() => suspendUser(u.id, u.first_name || u.phone || '')}>
-                      <Text style={styles.suspendBtn}>Suspendre</Text>
+                    <TouchableOpacity onPress={() => suspendUser(u.id, u.first_name || u.phone || '')} style={styles.suspendBtn}>
+                      <Ionicons name="ban-outline" size={16} color={Colors.error} />
                     </TouchableOpacity>
                   )}
                 </View>
               </View>
               {u.created_at && (
-                <Text style={styles.userDate}>Inscrit le {new Date(u.created_at).toLocaleDateString('fr-FR')}</Text>
+                <View style={styles.dateRow}>
+                  <Ionicons name="time-outline" size={12} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.userDate}>Inscrit le {new Date(u.created_at).toLocaleDateString('fr-FR')}</Text>
+                </View>
               )}
             </Card>
           ))}
@@ -97,25 +118,43 @@ export default function AdminUsersScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border,
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.sm },
+  errorWrap: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: Spacing.xl, gap: Spacing.md,
   },
-  headerTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  content: { padding: Spacing.lg },
-  empty: { fontSize: FontSize.body, color: Colors.mediumGray },
-  userCard: { marginBottom: Spacing.md },
+  errorText: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  header: {
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+    ...Shadow.sm,
+  },
+  headerTitle: { ...Typography.subheadSm, color: Colors.onSurface },
+  content: { padding: Spacing.md },
+  empty: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
+  userCard: { marginBottom: Spacing.sm },
   userTop: { flexDirection: 'row', alignItems: 'center' },
   userAvatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primary,
+    width: 44, height: 44, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryContainer,
     justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
   },
-  userAvatarText: { fontSize: 16, fontWeight: '700', color: Colors.black },
-  userName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  userDetail: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
+  userAvatarText: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  userName: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface, marginBottom: 2 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
+  userDetail: { ...Typography.caption, color: Colors.onSurfaceVariant },
   userActions: { alignItems: 'center' },
-  suspendedLabel: { fontSize: FontSize.caption, fontWeight: '700', color: Colors.sos },
-  suspendBtn: { fontSize: FontSize.caption, fontWeight: '700', color: Colors.sos },
-  userDate: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: Spacing.sm },
+  suspendedBadge: {
+    backgroundColor: Colors.errorContainer,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: BorderRadius.md,
+  },
+  suspendedLabel: { ...Typography.caption, fontWeight: '700' as any, color: Colors.error },
+  suspendBtn: {
+    width: 32, height: 32, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.errorContainer,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.sm },
+  userDate: { ...Typography.caption, color: Colors.onSurfaceVariant },
 });

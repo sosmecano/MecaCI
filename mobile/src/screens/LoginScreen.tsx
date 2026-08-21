@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
-import { Colors, FontSize, Spacing } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing, BorderRadius, Typography, Shadow, Glass } from '../constants/theme';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { api } from '../services/api';
@@ -68,11 +69,13 @@ export default function LoginScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.inner}>
-        <View style={styles.logoRow}>
-          <Text style={styles.logoIcon}>🔧</Text>
+        <View style={styles.brandSection}>
+          <View style={styles.logoContainer}>
+            <Ionicons name="build" size={36} color={Colors.primary} />
+          </View>
+          <Text style={styles.title}>Mecanova</Text>
+          <Text style={styles.subtitle}>Le mécanicien à portée de main</Text>
         </View>
-        <Text style={styles.title}>Mecanova</Text>
-        <Text style={styles.subtitle}>Le mécanicien à portée de main</Text>
 
         <View style={styles.form}>
           {step === 'phone' ? (
@@ -84,6 +87,7 @@ export default function LoginScreen({ navigation }: any) {
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
                 maxLength={20}
+                leftIcon="call-outline"
               />
               <Button
                 title="Continuer"
@@ -94,9 +98,14 @@ export default function LoginScreen({ navigation }: any) {
             </>
           ) : (
             <>
-              <Text style={styles.info}>Code envoyé au {phone}</Text>
+              <View style={styles.otpInfo}>
+                <Ionicons name="chatbubble-ellipses-outline" size={20} color={Colors.onSurfaceVariant} />
+                <Text style={styles.info}>Code envoyé au {phone}</Text>
+              </View>
               {otpCode ? (
-                <Text style={styles.otpDisplay}>{otpCode}</Text>
+                <View style={styles.otpDisplay}>
+                  <Text style={styles.otpCode}>{otpCode}</Text>
+                </View>
               ) : null}
               <Input
                 label="Code de vérification"
@@ -106,19 +115,24 @@ export default function LoginScreen({ navigation }: any) {
                 keyboardType="number-pad"
                 maxLength={6}
                 autoFocus
+                leftIcon="keypad-outline"
               />
-              {cooldown > 0 && <Text style={styles.cooldown}>Renvoyer dans {cooldown}s</Text>}
+              {cooldown > 0 && (
+                <Text style={styles.cooldown}>Renvoyer dans {cooldown}s</Text>
+              )}
               <Button title="Se connecter" onPress={verifyOtp} loading={loading} disabled={code.length < 6} />
-              <TouchableOpacity onPress={() => { setStep('phone'); setCode(''); }}>
-                <Text style={styles.backLink}>Modifier le numéro</Text>
+              <TouchableOpacity onPress={() => { setStep('phone'); setCode(''); }} style={styles.backLink}>
+                <Ionicons name="arrow-back" size={14} color={Colors.onSurfaceVariant} />
+                <Text style={styles.backLinkText}>Modifier le numéro</Text>
               </TouchableOpacity>
             </>
           )}
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity onPress={() => navigation.navigate('ProLogin')}>
-            <Text style={styles.proLink}>Espace professionnel</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('ProLogin')} style={styles.proLink}>
+            <Ionicons name="build-outline" size={18} color={Colors.onSurface} />
+            <Text style={styles.proLinkText}>Espace professionnel</Text>
           </TouchableOpacity>
           <Text style={styles.terms}>
             En continuant, vous acceptez nos{' '}
@@ -133,85 +147,104 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.background,
   },
   inner: {
     flex: 1,
     justifyContent: 'center',
     padding: Spacing.xl,
   },
-  logoRow: {
+  brandSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.xxl,
+  },
+  logoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.primaryContainer,
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
-  logoIcon: {
-    fontSize: 48,
-  },
   title: {
-    fontSize: FontSize.largeTitle,
-    fontWeight: '800',
-    color: Colors.black,
-    textAlign: 'center',
-    letterSpacing: -0.5,
+    ...Typography.headlineLg,
+    color: Colors.onSurface,
+    marginBottom: Spacing.xs,
   },
   subtitle: {
-    fontSize: FontSize.body,
-    color: Colors.mediumGray,
-    textAlign: 'center',
-    marginBottom: Spacing.xxl,
+    ...Typography.bodyBase,
+    color: Colors.onSurfaceVariant,
   },
   form: {
     marginBottom: Spacing.xl,
   },
-  cooldown: {
-    textAlign: 'center',
-    color: Colors.mediumGray,
-    fontSize: FontSize.caption,
-    marginBottom: Spacing.sm,
+  otpInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    justifyContent: 'center',
+    marginBottom: Spacing.lg,
   },
   info: {
-    fontSize: FontSize.body,
-    color: Colors.mediumGray,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
   },
   otpDisplay: {
-    fontSize: 32,
-    fontWeight: '700',
-    letterSpacing: 4,
-    textAlign: 'center',
-    color: Colors.black,
-    backgroundColor: '#E8F0FE',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    backgroundColor: Colors.primaryContainer,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
-    overflow: 'hidden',
+    alignItems: 'center',
+  },
+  otpCode: {
+    ...Typography.titleMd,
+    color: Colors.onPrimaryContainer,
+    letterSpacing: 6,
+  },
+  cooldown: {
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
   },
   backLink: {
-    textAlign: 'center',
-    color: Colors.mediumGray,
-    fontSize: FontSize.body,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
     marginTop: Spacing.md,
-    textDecorationLine: 'underline',
+  },
+  backLinkText: {
+    ...Typography.bodySm,
+    color: Colors.onSurfaceVariant,
   },
   footer: {
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
   proLink: {
-    color: Colors.black,
-    fontSize: FontSize.body,
-    fontWeight: '600',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: BorderRadius.lg,
+  },
+  proLinkText: {
+    ...Typography.bodySm,
+    fontWeight: '600' as any,
+    color: Colors.onSurface,
   },
   terms: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.caption,
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
     textAlign: 'center',
-    marginTop: Spacing.sm,
   },
   termsLink: {
-    textDecorationLine: 'underline',
-    color: Colors.mediumGray,
+    color: Colors.primary,
+    fontWeight: '600' as any,
   },
 });

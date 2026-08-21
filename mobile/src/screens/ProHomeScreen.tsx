@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as SecureStore from 'expo-secure-store';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { connectSocket, disconnectSocket, onReconnect } from '../services/socket';
@@ -177,7 +178,7 @@ export default function ProHomeScreen({ navigation }: any) {
         <View style={styles.incomingOverlay}>
           <View style={styles.incomingHeader}>
             <Animated.View style={[styles.pulseCircle, { transform: [{ scale: pulseAnim }] }]}>
-              <Text style={styles.pulseIcon}>🔧</Text>
+              <Ionicons name="build" size={32} color={Colors.primaryContainer} />
             </Animated.View>
             <Text style={styles.incomingTitle}>Nouvelle demande</Text>
             <Text style={styles.incomingDist}>{incomingDistance} km · {incoming.service_type || incoming.type || 'Service'}</Text>
@@ -200,7 +201,7 @@ export default function ProHomeScreen({ navigation }: any) {
                 longitude: parseFloat(incoming.location_lng) || -4.015,
               }}
               title="Client"
-              pinColor="#FF3B30"
+              pinColor={Colors.error}
             />
           </MapView>
 
@@ -217,7 +218,7 @@ export default function ProHomeScreen({ navigation }: any) {
                     {[incoming.user_first_name, incoming.user_last_name].filter(Boolean).join(' ') || 'Client'}
                   </Text>
                   <Text style={styles.clientInfoAddress}>
-                    📍 {incoming.location_address || incoming.address || 'Adresse inconnue'}
+                    {incoming.location_address || incoming.address || 'Adresse inconnue'}
                   </Text>
                   <Text style={styles.clientInfoDesc}>
                     {incoming.description || ''}
@@ -249,44 +250,56 @@ export default function ProHomeScreen({ navigation }: any) {
               <Text style={styles.businessSub}>{pro?.type || 'Pro'} · {pro?.city || ''}</Text>
             </View>
             <View style={styles.availRow}>
-              <Text style={[styles.availDot, { color: available ? Colors.success : Colors.mediumGray }]}>●</Text>
-              <Text style={styles.availLabel}>{available ? 'Disponible' : 'Indisponible'}</Text>
+              <View style={[styles.availDot, { backgroundColor: available ? Colors.success : Colors.outlineVariant }]} />
+              <Text style={[styles.availLabel, { color: available ? Colors.success : Colors.onSurfaceVariant }]}>
+                {available ? 'Disponible' : 'Indisponible'}
+              </Text>
               <Switch
                 value={available}
                 onValueChange={toggleAvailability}
-                trackColor={{ false: Colors.lightGray, true: Colors.primary }}
-                thumbColor={Colors.white}
+                trackColor={{ false: Colors.outlineVariant, true: Colors.primaryContainer }}
+                thumbColor={available ? Colors.primary : Colors.outline}
               />
             </View>
           </View>
 
           <View style={styles.statsRow}>
-            <View style={styles.statCard}>
+            <Card style={styles.statCard}>
+              <Ionicons name="star" size={20} color={Colors.primaryContainer} />
               <Text style={styles.statNum}>{typeof pro?.rating === 'number' ? pro.rating.toFixed(1) : pro?.rating || '—'}</Text>
               <Text style={styles.statLabel}>Note</Text>
-            </View>
-            <View style={styles.statCard}>
+            </Card>
+            <Card style={styles.statCard}>
+              <Ionicons name="chatbubble-outline" size={20} color={Colors.secondary} />
               <Text style={styles.statNum}>{pro?.rating_count || 0}</Text>
               <Text style={styles.statLabel}>Avis</Text>
-            </View>
-            <View style={styles.statCard}>
+            </Card>
+            <Card style={styles.statCard}>
+              <Ionicons name="time-outline" size={20} color={Colors.tertiary} />
               <Text style={styles.statNum}>{missions.length}</Text>
               <Text style={styles.statLabel}>En attente</Text>
-            </View>
+            </Card>
           </View>
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Nouvelles demandes</Text>
-            <Text style={styles.badge}>{missions.length}</Text>
+            {missions.length > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{missions.length}</Text>
+              </View>
+            )}
           </View>
 
           {missions.length === 0 ? (
-            <Text style={styles.noRequests}>Aucune demande pour le moment</Text>
+            <View style={styles.noRequests}>
+              <Ionicons name="mail-open-outline" size={48} color={Colors.outlineVariant} />
+              <Text style={styles.noRequestsText}>Aucune demande pour le moment</Text>
+            </View>
           ) : (
             missions.map((m: any, i: number) => {
               const clientName = [m.user_first_name, m.user_last_name].filter(Boolean).join(' ') || 'Client';
               return (
-              <TouchableOpacity key={m.id || i} style={styles.requestCard} activeOpacity={0.7}>
+              <Card key={m.id || i} style={styles.requestCard}>
                 <View style={styles.requestTop}>
                   <View style={styles.requestAvatar}>
                     <Text style={styles.requestAvatarText}>{clientName[0] || '?'}</Text>
@@ -294,9 +307,13 @@ export default function ProHomeScreen({ navigation }: any) {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.serviceLabel}>{m.type || 'Service'}</Text>
                     <Text style={styles.requestDetail}>{m.address || m.location_address || ''}</Text>
-                    <Text style={styles.requestClient}>👤 {clientName}</Text>
+                    <Text style={styles.requestClient}>{clientName}</Text>
                   </View>
-                  {m.price_estimate && <Text style={styles.requestPrice}>{m.price_estimate} FCFA</Text>}
+                  {m.price_estimate && (
+                    <View style={styles.priceBadge}>
+                      <Text style={styles.priceText}>{m.price_estimate} FCFA</Text>
+                    </View>
+                  )}
                 </View>
                 <View style={styles.requestActions}>
                   <Button title="Accepter" onPress={async () => {
@@ -309,7 +326,7 @@ export default function ProHomeScreen({ navigation }: any) {
                   }} style={{ flex: 1 }} />
                   <Button title="Ignorer" onPress={() => {}} variant="outline" style={{ flex: 1 }} />
                 </View>
-              </TouchableOpacity>
+              </Card>
               );
             })
           )}
@@ -322,84 +339,85 @@ export default function ProHomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content: { padding: Spacing.lg },
+  content: { padding: Spacing.md },
 
-  // Incoming overlay
-  incomingOverlay: { flex: 1, backgroundColor: Colors.black },
+  incomingOverlay: { flex: 1, backgroundColor: Colors.inverseSurface },
   incomingHeader: {
-    alignItems: 'center', paddingVertical: Spacing.lg,
-    backgroundColor: Colors.black, paddingTop: Spacing.xl,
+    alignItems: 'center', paddingTop: Spacing.xl, paddingBottom: Spacing.lg,
   },
   pulseCircle: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: Colors.primary,
+    justifyContent: 'center', alignItems: 'center',
     marginBottom: Spacing.sm,
   },
-  pulseIcon: { fontSize: 32 },
-  incomingTitle: { fontSize: FontSize.title, fontWeight: '800', color: Colors.white },
-  incomingDist: { fontSize: FontSize.body, color: Colors.mediumGray, marginTop: 2 },
+  incomingTitle: { ...Typography.titleMd, color: Colors.inverseOnSurface },
+  incomingDist: { ...Typography.bodySm, color: Colors.inverseOnSurface, opacity: 0.7, marginTop: 2 },
   incomingMap: { flex: 1, width: SCREEN_WIDTH },
   incomingBottom: {
-    backgroundColor: Colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: Spacing.lg, paddingBottom: Spacing.xl,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderTopLeftRadius: BorderRadius.xl, borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.md, paddingBottom: Spacing.xl,
+    ...Shadow.lg,
   },
   clientInfoCard: { padding: Spacing.md, marginBottom: Spacing.md },
   clientInfoRow: { flexDirection: 'row', alignItems: 'center' },
   clientAvatarSmall: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primary,
+    width: 40, height: 40, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryContainer,
     justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
   },
-  clientAvatarSmallText: { fontSize: 16, fontWeight: '700', color: Colors.black },
-  clientInfoName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  clientInfoAddress: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  clientInfoDesc: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
+  clientAvatarSmallText: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  clientInfoName: { ...Typography.bodyBase, fontWeight: '600' as any, color: Colors.onSurface },
+  clientInfoAddress: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 2 },
+  clientInfoDesc: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 2 },
   incomingActions: { flexDirection: 'row', gap: Spacing.sm },
   acceptBtn: { flex: 2 },
   ignoreBtn: { flex: 1 },
 
-  // Normal mode
   header: {
-    flexDirection: 'row', justifyContent: 'space-between',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
     marginBottom: Spacing.lg,
   },
-  businessName: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  businessSub: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  availRow: { alignItems: 'flex-end' },
-  availDot: { fontSize: 10, textAlign: 'right' },
-  availLabel: { fontSize: FontSize.caption, color: Colors.mediumGray, marginBottom: 4, fontWeight: '500' },
+  businessName: { ...Typography.titleMd, color: Colors.onSurface },
+  businessSub: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 2 },
+  availRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  availDot: { width: 8, height: 8, borderRadius: 4 },
+  availLabel: { ...Typography.caption, fontWeight: '600' as any },
+
   statsRow: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.lg },
   statCard: {
-    flex: 1, backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
-    padding: Spacing.md, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    flex: 1, alignItems: 'center', padding: Spacing.md, gap: Spacing.xs,
   },
-  statNum: { fontSize: FontSize.title, fontWeight: '800', color: Colors.black },
-  statLabel: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 2 },
+  statNum: { ...Typography.titleMd, color: Colors.onSurface },
+  statLabel: { ...Typography.caption, color: Colors.onSurfaceVariant },
+
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
-  sectionTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black, flex: 1 },
+  sectionTitle: { ...Typography.subheadSm, color: Colors.onSurface, flex: 1 },
   badge: {
-    backgroundColor: Colors.primary, color: Colors.black,
-    fontSize: FontSize.caption, fontWeight: '700',
-    paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10,
-    overflow: 'hidden',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 8, paddingVertical: 2, borderRadius: BorderRadius.full,
   },
-  requestCard: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl, padding: Spacing.md,
-    marginBottom: Spacing.md, position: 'relative',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
-  },
+  badgeText: { ...Typography.caption, fontWeight: '700' as any, color: Colors.onPrimary },
+
+  requestCard: { marginBottom: Spacing.sm },
   requestTop: { flexDirection: 'row', marginBottom: Spacing.md },
   requestAvatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primary,
+    width: 44, height: 44, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryContainer,
     justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
   },
-  requestAvatarText: { fontSize: 16, fontWeight: '700', color: Colors.black },
-  serviceLabel: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  requestDetail: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  requestClient: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  requestPrice: { fontSize: FontSize.caption, fontWeight: '600', color: Colors.black },
+  requestAvatarText: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  serviceLabel: { ...Typography.bodyBase, fontWeight: '600' as any, color: Colors.onSurface },
+  requestDetail: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 2 },
+  requestClient: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 2 },
+  priceBadge: {
+    backgroundColor: Colors.surfaceContainerHigh,
+    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md, alignSelf: 'flex-start',
+  },
+  priceText: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
   requestActions: { flexDirection: 'row', gap: Spacing.sm },
-  noRequests: { fontSize: FontSize.body, color: Colors.mediumGray, textAlign: 'center', marginTop: Spacing.xl },
+  noRequests: { alignItems: 'center', paddingVertical: Spacing.xxl, gap: Spacing.sm },
+  noRequestsText: { ...Typography.bodyBase, color: Colors.onSurfaceVariant },
 });

@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { api } from '../services/api';
@@ -66,12 +67,15 @@ export default function AdminProfessionalsScreen() {
       {loading ? (
         <View style={styles.center}><ActivityIndicator size="large" color={Colors.primary} /></View>
       ) : error ? (
-        <View style={{ alignItems: 'center', marginTop: Spacing.xl, paddingHorizontal: Spacing.lg }}>
-          <Text style={{ color: Colors.mediumGray, textAlign: 'center', marginBottom: Spacing.md }}>{error}</Text>
-          <Button title="Réessayer" onPress={loadPros} variant="outline" />
+        <View style={styles.errorWrap}>
+          <Ionicons name="cloud-offline-outline" size={48} color={Colors.onSurfaceVariant} />
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : pros.length === 0 ? (
-        <View style={styles.center}><Text style={styles.empty}>Aucun professionnel</Text></View>
+        <View style={styles.center}>
+          <Ionicons name="people-outline" size={48} color={Colors.outlineVariant} />
+          <Text style={styles.empty}>Aucun professionnel</Text>
+        </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           {pros.map((p: any, i: number) => (
@@ -88,10 +92,10 @@ export default function AdminProfessionalsScreen() {
                   <Text style={styles.proDetail}>{p.phone || ''}</Text>
                 </View>
                 <View style={[styles.statusBadge, {
-                  backgroundColor: p.status === 'active' ? '#E8F8E8' : p.status === 'pending' ? '#FFF3E0' : '#FFEBEE',
+                  backgroundColor: p.status === 'active' ? Colors.success + '20' : p.status === 'pending' ? Colors.primaryContainer + '40' : Colors.errorContainer,
                 }]}>
                   <Text style={[styles.statusText, {
-                    color: p.status === 'active' ? Colors.success : p.status === 'pending' ? '#FF9800' : Colors.sos,
+                    color: p.status === 'active' ? Colors.success : p.status === 'pending' ? Colors.primary : Colors.error,
                   }]}>{p.status}</Text>
                 </View>
               </View>
@@ -111,35 +115,44 @@ export default function AdminProfessionalsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border,
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.sm },
+  errorWrap: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: Spacing.xl, gap: Spacing.md,
   },
-  headerTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
+  errorText: { ...Typography.bodyBase, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  header: {
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+    ...Shadow.sm,
+  },
+  headerTitle: { ...Typography.subheadSm, color: Colors.onSurface },
   filterRow: {
-    flexDirection: 'row', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
-    gap: Spacing.sm, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    flexDirection: 'row', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    gap: Spacing.xs, backgroundColor: Colors.surfaceContainerLowest,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
   },
   filterBtn: {
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full, backgroundColor: Colors.lightGray,
+    borderRadius: BorderRadius.full, backgroundColor: Colors.surfaceContainerHigh,
   },
-  filterBtnActive: { backgroundColor: Colors.black },
-  filterText: { fontSize: FontSize.caption, fontWeight: '600', color: Colors.mediumGray },
-  filterTextActive: { color: Colors.white },
-  content: { padding: Spacing.lg },
-  empty: { fontSize: FontSize.body, color: Colors.mediumGray },
-  proCard: { marginBottom: Spacing.md },
-  proTop: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm },
+  filterBtnActive: { backgroundColor: Colors.primary },
+  filterText: { ...Typography.caption, fontWeight: '600' as any, color: Colors.onSurfaceVariant },
+  filterTextActive: { color: Colors.onPrimary },
+  content: { padding: Spacing.md },
+  empty: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
+  proCard: { marginBottom: Spacing.sm },
+  proTop: { flexDirection: 'row', alignItems: 'center' },
   proAvatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primary,
+    width: 44, height: 44, borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primaryContainer,
     justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
   },
-  proAvatarText: { fontSize: 16, fontWeight: '700', color: Colors.black },
-  proName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  proDetail: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  statusText: { fontSize: FontSize.caption, fontWeight: '700' },
+  proAvatarText: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  proName: { ...Typography.bodySm, fontWeight: '600' as any, color: Colors.onSurface },
+  proDetail: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: BorderRadius.md },
+  statusText: { ...Typography.caption, fontWeight: '700' as any },
   actions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
 });

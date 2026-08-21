@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput } from 'react-native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing, BorderRadius, Typography, Shadow } from '../constants/theme';
 import Button from '../components/Button';
+import Card from '../components/Card';
 import { api } from '../services/api';
 
 export default function VehiclesScreen({ navigation }: any) {
@@ -54,47 +56,66 @@ export default function VehiclesScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtn}>← Retour</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mes véhicules</Text>
-        <TouchableOpacity onPress={() => setShowForm(!showForm)}>
-          <Text style={styles.addBtn}>+</Text>
+        <TouchableOpacity onPress={() => setShowForm(!showForm)} style={styles.addBtn}>
+          <Ionicons name={showForm ? 'close' : 'add'} size={22} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {showForm && (
-          <View style={styles.form}>
-            <TextInput style={styles.input} placeholder="Marque (ex: Toyota)" placeholderTextColor={Colors.mediumGray} value={brand} onChangeText={setBrand} />
-            <TextInput style={styles.input} placeholder="Modèle (ex: Corolla)" placeholderTextColor={Colors.mediumGray} value={model} onChangeText={setModel} />
-            <TextInput style={styles.input} placeholder="Année (ex: 2020)" placeholderTextColor={Colors.mediumGray} value={year} onChangeText={setYear} keyboardType="number-pad" />
-            <TextInput style={styles.input} placeholder="Plaque (ex: AB-123-CD)" placeholderTextColor={Colors.mediumGray} value={plate} onChangeText={setPlate} />
+          <Card style={styles.form}>
+            <View style={styles.formRow}>
+              <View style={styles.formField}>
+                <Text style={styles.label}>Marque</Text>
+                <TextInput style={styles.input} placeholder="Toyota" placeholderTextColor={Colors.onSurfaceVariant} value={brand} onChangeText={setBrand} />
+              </View>
+              <View style={styles.formField}>
+                <Text style={styles.label}>Modèle</Text>
+                <TextInput style={styles.input} placeholder="Corolla" placeholderTextColor={Colors.onSurfaceVariant} value={model} onChangeText={setModel} />
+              </View>
+            </View>
+            <View style={styles.formRow}>
+              <View style={styles.formField}>
+                <Text style={styles.label}>Année</Text>
+                <TextInput style={styles.input} placeholder="2020" placeholderTextColor={Colors.onSurfaceVariant} value={year} onChangeText={setYear} keyboardType="number-pad" />
+              </View>
+              <View style={styles.formField}>
+                <Text style={styles.label}>Plaque</Text>
+                <TextInput style={styles.input} placeholder="AB-123-CD" placeholderTextColor={Colors.onSurfaceVariant} value={plate} onChangeText={setPlate} />
+              </View>
+            </View>
             <Button title="Ajouter" onPress={addVehicle} disabled={!brand || !model} />
-          </View>
+          </Card>
         )}
 
         {loading ? (
           <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: Spacing.xxl }} />
         ) : vehicles.length === 0 ? (
           <View style={styles.empty}>
+            <View style={styles.emptyIconWrap}>
+              <Ionicons name="car-sport-outline" size={48} color={Colors.outlineVariant} />
+            </View>
             <Text style={styles.emptyText}>Aucun véhicule enregistré</Text>
             <Button title="Ajouter un véhicule" onPress={() => setShowForm(true)} style={{ marginTop: Spacing.md }} />
           </View>
         ) : (
           vehicles.map((v: any) => (
-            <View key={v.id} style={styles.vehicleCard}>
+            <Card key={v.id} style={styles.vehicleCard}>
               <View style={styles.vehicleIcon}>
-                <Text style={styles.vehicleIconText}>🚗</Text>
+                <Ionicons name="car-sport" size={22} color={Colors.secondary} />
               </View>
               <View style={styles.vehicleInfo}>
                 <Text style={styles.vehicleName}>{v.brand} {v.model} {v.year}</Text>
                 {v.license_plate && <Text style={styles.vehiclePlate}>{v.license_plate}</Text>}
               </View>
-              <TouchableOpacity onPress={() => removeVehicle(v.id)}>
-                <Text style={styles.deleteBtn}>🗑️</Text>
+              <TouchableOpacity onPress={() => removeVehicle(v.id)} style={styles.deleteBtn}>
+                <Ionicons name="trash-outline" size={20} color={Colors.error} />
               </TouchableOpacity>
-            </View>
+            </Card>
           ))
         )}
       </ScrollView>
@@ -103,39 +124,109 @@ export default function VehiclesScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  container: { flex: 1, backgroundColor: Colors.background },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.outlineVariant,
+    ...Shadow.sm,
   },
-  backBtn: { fontSize: FontSize.body, fontWeight: '600', color: Colors.primaryDark },
-  headerTitle: { fontSize: FontSize.subtitle, fontWeight: '700', color: Colors.black },
-  addBtn: { fontSize: 28, fontWeight: '600', color: Colors.primaryDark },
-  content: { padding: Spacing.lg },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surfaceContainerHigh,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    ...Typography.subheadSm,
+    color: Colors.onSurface,
+  },
+  addBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.primaryContainer,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: { padding: Spacing.md },
   form: {
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
-    padding: Spacing.lg, marginBottom: Spacing.lg, gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  formRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  formField: {
+    flex: 1,
+  },
+  label: {
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
+    marginBottom: 4,
+    fontWeight: '600' as any,
   },
   input: {
-    backgroundColor: Colors.lightGray, borderRadius: BorderRadius.md,
-    padding: Spacing.md, fontSize: FontSize.body, color: Colors.black,
+    backgroundColor: Colors.surfaceContainerHigh,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.sm,
+    height: 44,
+    ...Typography.bodySm,
+    color: Colors.onSurface,
   },
   empty: { alignItems: 'center', marginTop: Spacing.xxl },
-  emptyText: { fontSize: FontSize.body, color: Colors.mediumGray },
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surfaceContainerHigh,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  emptyText: {
+    ...Typography.bodyBase,
+    color: Colors.onSurfaceVariant,
+  },
   vehicleCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.white, borderRadius: BorderRadius.xl,
-    padding: Spacing.md, marginBottom: Spacing.md,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
   },
   vehicleIcon: {
-    width: 48, height: 48, borderRadius: 12, backgroundColor: '#E5F0FF',
-    justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.secondaryContainer + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.md,
   },
-  vehicleIconText: { fontSize: 22 },
   vehicleInfo: { flex: 1 },
-  vehicleName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  vehiclePlate: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  deleteBtn: { fontSize: 20, padding: Spacing.sm },
+  vehicleName: {
+    ...Typography.bodyBase,
+    fontWeight: '600' as any,
+    color: Colors.onSurface,
+  },
+  vehiclePlate: {
+    ...Typography.caption,
+    color: Colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  deleteBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.errorContainer,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

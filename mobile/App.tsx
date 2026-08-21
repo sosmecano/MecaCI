@@ -9,15 +9,17 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import { View, Text, StyleSheet, Animated, Vibration, Modal, Dimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
-import { Colors, FontSize, Spacing, BorderRadius } from './src/constants/theme';
+import { Colors, FontSize, Spacing, BorderRadius, Shadow, Typography } from './src/constants/theme';
 import Button from './src/components/Button';
 import Card from './src/components/Card';
+import CustomDrawer from './src/components/CustomDrawer';
 import { connectSocket, disconnectSocket } from './src/services/socket';
 import { api } from './src/services/api';
 import { playRing, stopRing } from './modules/sound-player/src/index';
@@ -31,6 +33,7 @@ import PaymentScreen from './src/screens/PaymentScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import GaragesScreen from './src/screens/GaragesScreen';
 import TowingScreen from './src/screens/TowingScreen';
+import TowTrucksScreen from './src/screens/TowTrucksScreen';
 import TrackingScreen from './src/screens/TrackingScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import ProLoginScreen from './src/screens/ProLoginScreen';
@@ -51,9 +54,10 @@ import AdminUsersScreen from './src/screens/AdminUsersScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
 
 const tabs = [
-  { name: 'Accueil', icon: 'home', iconActive: 'home', component: HomeScreen },
+  { name: 'Accueil', icon: 'home-outline', iconActive: 'home', component: HomeScreen },
   { name: 'Services', icon: 'construct-outline', iconActive: 'construct', component: GaragesScreen },
   { name: 'Activite', icon: 'time-outline', iconActive: 'time', component: TrackingScreen },
   { name: 'Profil', icon: 'person-outline', iconActive: 'person', component: ProfileScreen },
@@ -65,8 +69,9 @@ function TabIcon({ icon, iconActive, focused }: { icon: string; iconActive: stri
       <Ionicons
         name={(focused ? iconActive : icon) as any}
         size={24}
-        color={focused ? Colors.black : Colors.textSecondary}
+        color={focused ? Colors.primary : Colors.onSurfaceVariant}
       />
+      {focused && <View style={tabStyles.activeIndicator} />}
     </View>
   );
 }
@@ -82,25 +87,29 @@ function GlassTabBarBackground() {
 
 function ClientTabs() {
   return (
-    <Tab.Navigator
+    <Drawer.Navigator
+      drawerContent={(props) => <CustomDrawer {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: tabStyles.bar,
-        tabBarShowLabel: false,
-        tabBarBackground: () => <GlassTabBarBackground />,
+        drawerStyle: {
+          backgroundColor: Colors.white,
+          width: 280,
+          borderTopRightRadius: 0,
+          borderBottomRightRadius: 0,
+        },
+        overlayColor: 'rgba(0,0,0,0.4)',
+        sceneStyle: { backgroundColor: Colors.white },
       }}
     >
-      {tabs.map((t) => (
-        <Tab.Screen
-          key={t.name}
-          name={t.name}
-          component={t.component}
-          options={{
-            tabBarIcon: ({ focused }) => <TabIcon icon={t.icon} iconActive={t.iconActive} focused={focused} />,
-          }}
-        />
-      ))}
-    </Tab.Navigator>
+      <Drawer.Screen name="Accueil" component={HomeScreen} />
+      <Drawer.Screen name="Services" component={GaragesScreen} />
+      <Drawer.Screen name="Activite" component={TrackingScreen} />
+      <Drawer.Screen name="Vehicles" component={VehiclesScreen} />
+      <Drawer.Screen name="Tracking" component={TrackingScreen} />
+      <Drawer.Screen name="Payment" component={PaymentScreen} />
+      <Drawer.Screen name="Parametres" component={ParametresScreen} />
+      <Drawer.Screen name="Profil" component={ProfileScreen} />
+    </Drawer.Navigator>
   );
 }
 
@@ -310,6 +319,7 @@ export default function App() {
         <Stack.Screen name="Payment" component={PaymentScreen} />
         <Stack.Screen name="Garages" component={GaragesScreen} />
         <Stack.Screen name="Towing" component={TowingScreen} />
+        <Stack.Screen name="TowTrucks" component={TowTrucksScreen} />
         <Stack.Screen name="Tracking" component={TrackingScreen} />
         <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="GarageMap" component={GarageMapScreen} />
@@ -329,17 +339,21 @@ const tabStyles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderTopWidth: 0,
     elevation: 0,
-    height: 70,
-    paddingBottom: 8,
-    paddingTop: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    height: 64,
+    paddingBottom: 6,
+    paddingTop: 6,
+    paddingHorizontal: 20,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 999,
+    overflow: 'hidden',
+    ...Shadow.lg,
   },
   glassWrap: {
     flex: 1,
+    borderRadius: 999,
     overflow: 'hidden',
+    backgroundColor: 'rgba(255, 248, 240, 0.85)',
   },
   glassBorder: {
     position: 'absolute',
@@ -347,11 +361,19 @@ const tabStyles = StyleSheet.create({
     left: 0,
     right: 0,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(209, 198, 171, 0.5)',
   },
   iconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 2,
+  },
+  activeIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.primary,
+    marginTop: 2,
   },
 
   // Incoming mission overlay
@@ -362,26 +384,26 @@ const tabStyles = StyleSheet.create({
   },
   pulseCircle: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: Colors.primaryContainer, justifyContent: 'center', alignItems: 'center',
     marginBottom: Spacing.sm,
   },
   pulseIcon: { fontSize: 32 },
-  incomingTitle: { fontSize: FontSize.title, fontWeight: '800', color: Colors.white },
-  incomingDist: { fontSize: FontSize.body, color: Colors.mediumGray, marginTop: 2 },
+  incomingTitle: { ...Typography.headlineLg, color: Colors.white },
+  incomingDist: { ...Typography.bodyBase, color: Colors.surfaceDim, marginTop: 2 },
   incomingMap: { flex: 1, width: SCREEN_WIDTH },
   incomingBottom: {
-    backgroundColor: Colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    backgroundColor: Colors.surfaceContainerLowest, borderTopLeftRadius: BorderRadius.xl + 8, borderTopRightRadius: BorderRadius.xl + 8,
     padding: Spacing.lg, paddingBottom: Spacing.xl,
   },
   clientInfoCard: { padding: Spacing.md, marginBottom: Spacing.md },
   clientInfoRow: { flexDirection: 'row', alignItems: 'center' },
   clientAvatarSmall: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primary,
+    width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primaryContainer,
     justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md,
   },
-  clientAvatarSmallText: { fontSize: 16, fontWeight: '700', color: Colors.black },
-  clientInfoName: { fontSize: FontSize.body, fontWeight: '700', color: Colors.black },
-  clientInfoAddress: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
-  clientInfoDesc: { fontSize: FontSize.caption, color: Colors.mediumGray, marginTop: 1 },
+  clientAvatarSmallText: { ...Typography.bodyBase, fontWeight: '700' as any, color: Colors.onPrimaryContainer },
+  clientInfoName: { ...Typography.bodySm, fontWeight: '700' as any, color: Colors.onSurface },
+  clientInfoAddress: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
+  clientInfoDesc: { ...Typography.caption, color: Colors.onSurfaceVariant, marginTop: 1 },
   incomingActions: { flexDirection: 'row', gap: Spacing.sm },
 });
